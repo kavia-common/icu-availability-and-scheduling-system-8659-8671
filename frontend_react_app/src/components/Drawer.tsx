@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import "./Drawer.css";
+import "./Drawer.scss";
 
 export interface DrawerLink {
   id: string;

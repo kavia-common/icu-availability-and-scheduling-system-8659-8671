@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Availability, Doctor, ICU, TimeRange, Weekday } from "../types/domain";
 import { createAvailability, deleteAvailability, listAvailabilities, listDoctors, listICUs } from "../services/api";
-import "./AvailabilityManager.css";
+import "./AvailabilityManager.scss";
 
 type EntityType = "doctor" | "icu";
 const weekdays: Weekday[] = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];

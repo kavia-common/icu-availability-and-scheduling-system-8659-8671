@@ -1,5 +1,5 @@
 import React from "react";
-import "./TabLayout.css";
+import "./TabLayout.scss";
 
 export interface Tab {
   id: string;

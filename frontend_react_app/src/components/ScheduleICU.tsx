@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Doctor, ICU } from "../types/domain";
 import { listDoctors, listICUs } from "../services/api";
-import "./ScheduleICU.css";
+import "./ScheduleICU.scss";
 import BookingModal, { BookingPayload } from "./BookingModal/BookingModal";
 
 /**

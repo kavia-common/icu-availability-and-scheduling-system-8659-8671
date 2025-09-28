@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../../styles/theme.css";
-import "./BookingModal.css";
+import "./BookingModal.scss";
 
 export interface BookingPayload {
   date: string; // YYYY-MM-DD

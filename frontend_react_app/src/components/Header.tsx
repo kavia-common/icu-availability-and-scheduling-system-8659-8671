@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Drawer, { DrawerLink } from "./Drawer";
-import "./Header.css";
+import "./Header.scss";
 
 interface HeaderProps {
   theme: "ocean" | "dark";
