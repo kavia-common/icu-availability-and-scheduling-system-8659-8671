@@ -29,6 +29,7 @@ export default function Header({ theme, onToggleTheme, onOpenSchedule, onGoHome 
   return (
     <header className="app-header" role="banner" aria-label="App header">
       <div className="app-header__inner">
+        {/* Functional hamburger replacing <i class='bi bi-list menu-icon'></i> */}
         <button
           ref={hamburgerRef}
           aria-label="Open menu"
@@ -38,7 +39,6 @@ export default function Header({ theme, onToggleTheme, onOpenSchedule, onGoHome 
           className="hamburger-btn"
           onClick={openMenu}
         >
-          {/* Accessible SVG hamburger (three lines) */}
           <svg
             className="hamburger-btn__icon"
             width="20"
