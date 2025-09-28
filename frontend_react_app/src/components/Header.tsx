@@ -108,14 +108,14 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
           className="icu-header__hamburger"
           onClick={openDrawer}
         >
-          {/* Using inline SVG to avoid external icon deps; stylistically matches bi-list */}
+          {/* Inline SVG hamburger icon, accessible and dependency-free */}
           <svg
             className="icu-header__hamburger-icon"
             width="22"
             height="22"
             viewBox="0 0 24 24"
-            role="img"
             aria-hidden="true"
+            focusable="false"
           >
             <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
