@@ -76,7 +76,7 @@ export default function App() {
       />
       {renderMainContent()}
       <footer className="footer">
-        <p>ICU Availability & Scheduling System - Ocean Professional Theme</p>
+        <p>ICU Availability & Scheduling System · Ocean Professional Theme</p>
       </footer>
     </div>
   );

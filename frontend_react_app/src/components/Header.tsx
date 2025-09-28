@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Drawer, { DrawerLink } from "./Drawer";
 
 interface HeaderProps {
   theme: "ocean" | "dark";
@@ -10,7 +11,15 @@ interface HeaderProps {
 // PUBLIC_INTERFACE
 export default function Header({ theme, onToggleTheme, onOpenScheduleManager, onGoHome }: HeaderProps) {
   /** Header with hamburger menu, brand, quick navigation, and theme toggle. */
-  const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const links: DrawerLink[] = [
+    { id: "home", label: "Home", onClick: onGoHome, ariaLabel: "Go to Home" },
+    { id: "schedule-manager", label: "Schedule Manager", onClick: onOpenScheduleManager },
+    // Placeholder links - can be wired later
+    { id: "reports", label: "Reports (Coming Soon)", onClick: () => {} },
+    { id: "settings", label: "Settings (Coming Soon)", onClick: () => {} },
+  ];
 
   return (
     <header aria-label="App header"
@@ -35,7 +44,7 @@ export default function Header({ theme, onToggleTheme, onOpenScheduleManager, on
             <button
               aria-label="Open menu"
               className="btn"
-              onClick={() => setOpen(v => !v)}
+              onClick={() => setDrawerOpen(true)}
               style={{
                 background: "#fff",
                 borderColor: "var(--color-border)",
@@ -77,23 +86,15 @@ export default function Header({ theme, onToggleTheme, onOpenScheduleManager, on
               </button>
             </div>
           </div>
-
-          {open && (
-            <nav aria-label="Navigation" style={{ marginTop: 12, paddingBottom: 8 }}>
-              <div className="surface" style={{ padding: 12, borderRadius: 12 }}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                  <button className="btn" onClick={onGoHome} style={{ borderColor: "var(--color-border)" }}>
-                    Home
-                  </button>
-                  <button className="btn" onClick={onOpenScheduleManager} style={{ borderColor: "var(--color-border)" }}>
-                    Schedule Manager
-                  </button>
-                </div>
-              </div>
-            </nav>
-          )}
         </div>
       </div>
+
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Navigation"
+        links={links}
+      />
     </header>
   );
 }

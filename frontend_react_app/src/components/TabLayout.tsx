@@ -13,7 +13,7 @@ interface TabLayoutProps {
 }
 
 // PUBLIC_INTERFACE
-export default function TabLayout({ tabs, activeTab, onTabChange, children = null }: TabLayoutProps) {
+export default function TabLayout({ tabs, activeTab, onTabChange, children }: TabLayoutProps) {
   /** Presents a tab bar and renders current tab children. */
   return (
     <div className="surface" style={{ padding: 12 }}>
@@ -36,7 +36,7 @@ export default function TabLayout({ tabs, activeTab, onTabChange, children = nul
               key={t.id}
               role="tab"
               aria-selected={selected}
-              aria-controls={"panel-" + t.id}
+              aria-controls={`panel-${t.id}`}
               className="btn"
               onClick={() => onTabChange(t.id)}
               style={{
@@ -51,7 +51,7 @@ export default function TabLayout({ tabs, activeTab, onTabChange, children = nul
         })}
       </div>
 
-      <div id={"panel-" + activeTab} role="tabpanel" style={{ marginTop: 16 }}>
+      <div id={`panel-${activeTab}`} role="tabpanel" style={{ marginTop: 16 }}>
         {children}
       </div>
     </div>
