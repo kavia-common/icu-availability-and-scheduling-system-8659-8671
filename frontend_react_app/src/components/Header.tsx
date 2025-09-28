@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import "./Header.scss";
 import "./HeaderLocalOverrides.scss";
 import { useNavigate } from "react-router-dom";
+// Import Schedule page component for type awareness/reference if needed.
+// Note: We do not render it here; App handles route rendering.
+import ScheduleICU from "./ScheduleICU";
 
 interface HeaderProps {
   userId?: string; // kept for compatibility with previous version
@@ -17,7 +20,7 @@ interface HeaderProps {
  * - Minimalist logic: useState for open/close
  * - Accessibility: keyboard accessible, closes on outside click or Esc
  * - Navigation: uses onOpenSchedule() if provided, otherwise react-router-dom navigate("/schedule").
- * - Only triggers navigation; it does not render ScheduleICU directly.
+ * - Renders a <su/> custom clickable element that navigates to Schedule when clicked.
  */
 export const Header: React.FC<HeaderProps> = ({
   theme,
