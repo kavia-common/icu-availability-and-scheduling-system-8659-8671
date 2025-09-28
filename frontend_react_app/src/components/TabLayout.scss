@@ -1,0 +1,35 @@
+@use "../styles/variables" as *;
+@use "../styles/mixins" as m;
+
+.tab-layout {
+  padding: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+
+  &__tabs {
+    display: flex;
+    gap: 10px;
+    padding: 6px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(243,244,246,0.5));
+    border: 1px solid var(--border-subtle);
+  }
+
+  &__btn {
+    @extend .btn;
+    background: #fff;
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    &--active {
+      background: var(--bg-elevated);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  &__panel {
+    margin-top: 16px;
+  }
+}

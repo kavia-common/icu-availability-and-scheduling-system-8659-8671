@@ -1,0 +1,58 @@
+@use "../styles/variables" as *;
+@use "../styles/mixins" as m;
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 0 var(--border-subtle);
+
+  &__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-12;
+  }
+}
+
+.hamburger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-8);
+  background: #fff;
+  cursor: pointer;
+  &:focus-visible { @include m.focus-ring; }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+
+  &__logo {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(37,99,235,.25), rgba(245,158,11,.25));
+    display: grid; place-items: center;
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  &__title { font-weight: 800; letter-spacing: .2px; }
+  &__subtitle { font-size: 12px; color: var(--text-tertiary); }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

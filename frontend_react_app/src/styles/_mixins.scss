@@ -1,0 +1,17 @@
+@mixin focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.35);
+}
+
+@mixin visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

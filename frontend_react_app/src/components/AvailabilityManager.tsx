@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Availability, Doctor, ICU, TimeRange, Weekday } from "../types/domain";
 import { createAvailability, deleteAvailability, listAvailabilities, listDoctors, listICUs } from "../services/api";
+import "./AvailabilityManager.css";
 
 type EntityType = "doctor" | "icu";
 const weekdays: Weekday[] = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -89,15 +90,13 @@ export default function AvailabilityManager() {
   };
 
   return (
-    <div className="surface" style={{ padding: 16 }}>
-      <h2 style={{ margin: 0, marginBottom: 12 }}>Manage Availability</h2>
-      <p style={{ color: "var(--color-muted)", marginTop: 0, marginBottom: 16 }}>
-        Add or remove availability windows for doctors and ICU rooms.
-      </p>
+    <section className="avail">
+      <h2 className="avail__title">Manage Availability</h2>
+      <p className="avail__desc">Add or remove availability windows for doctors and ICU rooms.</p>
 
-      <form onSubmit={onSubmit} className="grid grid-3" style={{ marginBottom: 16 }}>
-        <div>
-          <label style={{ display: "block", fontSize: 12, marginBottom: 6, color: "var(--color-muted)" }}>Entity Type</label>
+      <form onSubmit={onSubmit} className="avail__grid">
+        <div className="avail__field">
+          <label>Entity Type</label>
           <select
             className="select"
             value={form.entityType}
@@ -108,10 +107,8 @@ export default function AvailabilityManager() {
           </select>
         </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 12, marginBottom: 6, color: "var(--color-muted)" }}>
-            {form.entityType === "doctor" ? "Doctor" : "ICU Room"}
-          </label>
+        <div className="avail__field">
+          <label>{form.entityType === "doctor" ? "Doctor" : "ICU Room"}</label>
           <select
             className="select"
             value={form.entityId}
@@ -126,8 +123,8 @@ export default function AvailabilityManager() {
           </select>
         </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 12, marginBottom: 6, color: "var(--color-muted)" }}>Weekday</label>
+        <div className="avail__field">
+          <label>Weekday</label>
           <select
             className="select"
             value={form.day}
@@ -137,17 +134,17 @@ export default function AvailabilityManager() {
           </select>
         </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 12, marginBottom: 6, color: "var(--color-muted)" }}>Start</label>
+        <div className="avail__field">
+          <label>Start</label>
           <input className="input" type="time" value={form.start} onChange={(e) => onChange({ start: e.target.value })} />
         </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 12, marginBottom: 6, color: "var(--color-muted)" }}>End</label>
+        <div className="avail__field">
+          <label>End</label>
           <input className="input" type="time" value={form.end} onChange={(e) => onChange({ end: e.target.value })} />
         </div>
 
-        <div style={{ display: "flex", alignItems: "end" }}>
+        <div className="avail__actions">
           <button className="btn btn-primary" type="submit" disabled={submitting}>
             {submitting ? "Adding..." : "Add Availability"}
           </button>
@@ -155,40 +152,40 @@ export default function AvailabilityManager() {
       </form>
 
       {error && (
-        <div className="surface" style={{ padding: 12, borderLeft: "4px solid var(--color-error)", marginBottom: 12 }}>
+        <div className="avail__error">
           {error}
         </div>
       )}
 
-      <div className="surface" style={{ overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead style={{ background: "rgba(59,130,246,0.06)" }}>
+      <div className="avail__table">
+        <table>
+          <thead>
             <tr>
-              <th style={th}>Type</th>
-              <th style={th}>Entity</th>
-              <th style={th}>Day</th>
-              <th style={th}>Time</th>
-              <th style={th}></th>
+              <th>Type</th>
+              <th>Entity</th>
+              <th>Day</th>
+              <th>Time</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{ padding: 12 }}>Loading...</td></tr>
+              <tr><td colSpan={5} className="cell--pad">Loading...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={5} style={{ padding: 12, color: "var(--color-muted)" }}>No availability defined yet.</td></tr>
+              <tr><td colSpan={5} className="cell--pad text-muted">No availability defined yet.</td></tr>
             ) : (
               items.map(a => (
-                <tr key={a.id} style={{ borderTop: "1px solid var(--color-border)" }}>
-                  <td style={td}>{a.entityType.toUpperCase()}</td>
-                  <td style={td}>
+                <tr key={a.id}>
+                  <td>{a.entityType.toUpperCase()}</td>
+                  <td>
                     {a.entityType === "doctor"
                       ? doctors.find(d => d.id === a.entityId)?.name || a.entityId
                       : icus.find(i => i.id === a.entityId)?.name || a.entityId}
                   </td>
-                  <td style={td}>{a.day}</td>
-                  <td style={td}>{a.range.start} - {a.range.end}</td>
-                  <td style={{ ...td, textAlign: "right" }}>
-                    <button className="btn" onClick={() => onRemove(a.id)} style={{ borderColor: "var(--color-border)" }}>
+                  <td>{a.day}</td>
+                  <td>{a.range.start} - {a.range.end}</td>
+                  <td className="right">
+                    <button className="btn" onClick={() => onRemove(a.id)}>
                       Remove
                     </button>
                   </td>
@@ -198,18 +195,6 @@ export default function AvailabilityManager() {
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }
-
-const th: React.CSSProperties = {
-  textAlign: "left",
-  padding: 12,
-  fontSize: 12,
-  color: "var(--color-muted)",
-  fontWeight: 600
-};
-const td: React.CSSProperties = {
-  padding: 12,
-  fontSize: 14
-};

@@ -1,4 +1,5 @@
 import React from "react";
+import "./TabLayout.css";
 
 export interface Tab {
   id: string;
@@ -14,21 +15,10 @@ interface TabLayoutProps {
 
 // PUBLIC_INTERFACE
 export default function TabLayout({ tabs, activeTab, onTabChange, children }: TabLayoutProps) {
-  /** Presents a tab bar and renders current tab children. */
+  /** Presents a tab bar and renders current tab children with SCSS styling. */
   return (
-    <div className="surface" style={{ padding: 12 }}>
-      <div
-        role="tablist"
-        aria-label="Main tabs"
-        style={{
-          display: "flex",
-          gap: 10,
-          padding: 6,
-          borderRadius: 12,
-          background: "linear-gradient(135deg, rgba(59,130,246,0.08), rgba(243,244,246,0.5))",
-          border: "1px solid var(--color-border)",
-        }}
-      >
+    <section className="tab-layout">
+      <div role="tablist" aria-label="Main tabs" className="tab-layout__tabs">
         {tabs.map(t => {
           const selected = t.id === activeTab;
           return (
@@ -37,13 +27,8 @@ export default function TabLayout({ tabs, activeTab, onTabChange, children }: Ta
               role="tab"
               aria-selected={selected}
               aria-controls={`panel-${t.id}`}
-              className="btn"
+              className={`tab-layout__btn ${selected ? "tab-layout__btn--active" : ""}`}
               onClick={() => onTabChange(t.id)}
-              style={{
-                background: selected ? "var(--color-surface)" : "#fff",
-                borderColor: selected ? "var(--color-primary-500)" : "var(--color-border)",
-                color: selected ? "var(--color-primary)" : "var(--color-text)"
-              }}
             >
               {t.label}
             </button>
@@ -51,9 +36,9 @@ export default function TabLayout({ tabs, activeTab, onTabChange, children }: Ta
         })}
       </div>
 
-      <div id={`panel-${activeTab}`} role="tabpanel" style={{ marginTop: 16 }}>
+      <div id={`panel-${activeTab}`} role="tabpanel" className="tab-layout__panel">
         {children}
       </div>
-    </div>
+    </section>
   );
 }

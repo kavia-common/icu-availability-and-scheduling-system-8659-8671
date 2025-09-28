@@ -1,0 +1,18 @@
+/* Converted from SCSS to CSS */
+.bm-overlay {
+  position: fixed; inset: 0; background: var(--bg-overlay-dim);
+  display: grid; place-items: center; z-index: 1000; padding: 24px;
+}
+.bm-card {
+  width: 100%; max-width: 600px; background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle); border-radius: 12px;
+  box-shadow: 0 20px 40px -12px rgba(0,0,0,0.2); padding: 16px 16px 8px;
+}
+.bm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.bm-header h3 { font-size: 18px; margin: 0; }
+.bm-close { border: 1px solid var(--border-subtle); background: #fff; }
+.bm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.bm-field { display: flex; flex-direction: column; gap: 6px; }
+.bm-field label { font-size: 12px; color: var(--text-tertiary); }
+.bm-notes { grid-column: 1 / -1; }
+.bm-footer { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 12px; margin-top: 4px; }
