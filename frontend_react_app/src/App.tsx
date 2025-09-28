@@ -4,10 +4,18 @@ import Header from "./components/Header";
 import TabLayout from "./components/TabLayout";
 import AvailabilityManager from "./components/AvailabilityManager";
 import ScheduleICU from "./components/ScheduleICU";
-import ScheduleManager from "./components/ScheduleManager";
 
+/**
+ * Define supported hash routes for this app.
+ * - "/"           -> Home (header only)
+ * - "/schedule"   -> Schedule page (tabs for Manage Availability and Schedule ICU)
+ */
 type Route = "/" | "/schedule";
 
+/**
+ * A minimal hash-based router.
+ * Keeps the URL hash in sync with local state and provides a navigate() helper.
+ */
 function useHashRoute() {
   const getHash = (): Route => {
     const h = window.location.hash.replace("#", "") || "/";
@@ -31,7 +39,10 @@ function useHashRoute() {
 
 // PUBLIC_INTERFACE
 export default function App() {
-  /** Root component: theme management, header, hash-based nav, and tabbed schedule screen. */
+  /**
+   * Root component: theme management, header, hash-based nav, and tabbed schedule screen.
+   * The hamburger menu's "Schedule" item navigates to "#/schedule", which is handled here.
+   */
   const { route, navigate } = useHashRoute();
 
   const [theme, setTheme] = useState<"ocean" | "dark">("ocean");
@@ -40,22 +51,26 @@ export default function App() {
   }, [theme]);
 
   // PUBLIC_INTERFACE
-  const toggleTheme = () => setTheme(t => (t === "dark" ? "ocean" : "dark"));
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "ocean" : "dark"));
 
   // Tabs for combined Schedule view
-  const tabs = useMemo(() => ([
-    { id: "availability", label: "Manage Availability" },
-    { id: "schedule", label: "Schedule ICU" },
-  ]), []);
+  const tabs = useMemo(
+    () => [
+      { id: "availability", label: "Manage Availability" },
+      { id: "schedule", label: "Schedule ICU" },
+    ],
+    []
+  );
   const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
 
+  // Render content based on hash "route"
   const renderMainContent = () => {
     if (route === "/") {
       // Home: header only, blank body as per requirement
       return <main aria-label="Home main content" />;
     }
 
-    // "/schedule": Combined sections (tabs or panels)
+    // Route: "/schedule" -> ICU Schedule page (tabbed)
     return (
       <main className="container" aria-label="Schedule main content">
         <TabLayout tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
