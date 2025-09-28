@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "npx react-scripts build",
     "test": "react-scripts test --watchAll=false",
     "eject": "react-scripts eject"
   },
@@ -33,6 +33,6 @@
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "cross-env": "^7.0.3",
-    "typescript": "^5.6.3"
+    "typescript": "^5.9.2"
   }
 }
