@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Drawer, { DrawerLink } from "./Drawer";
 import "./Header.scss";
 
@@ -11,22 +11,44 @@ interface HeaderProps {
 
 // PUBLIC_INTERFACE
 export default function Header({ theme, onToggleTheme, onOpenSchedule, onGoHome }: HeaderProps) {
-  /** Header with hamburger menu and minimal actions. Home shows only this header. */
+  /** Header with accessible hamburger menu and minimal actions. Home shows only this header. */
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const hamburgerRef = useRef<HTMLButtonElement | null>(null);
 
   const links: DrawerLink[] = [
     { id: "schedule", label: "Schedule", onClick: onOpenSchedule, ariaLabel: "Open Schedule" },
   ];
 
+  const openMenu = () => setDrawerOpen(true);
+  const closeMenu = () => {
+    setDrawerOpen(false);
+    // Return focus to the hamburger after closing for accessibility
+    setTimeout(() => hamburgerRef.current?.focus(), 0);
+  };
+
   return (
     <header className="app-header" role="banner" aria-label="App header">
       <div className="app-header__inner">
         <button
+          ref={hamburgerRef}
           aria-label="Open menu"
+          aria-haspopup="dialog"
+          aria-expanded={drawerOpen}
+          aria-controls="app-drawer"
           className="hamburger-btn"
-          onClick={() => setDrawerOpen(true)}
+          onClick={openMenu}
         >
-          <span className="hamburger-btn__icon" aria-hidden>☰</span>
+          {/* Accessible SVG hamburger (three lines) */}
+          <svg
+            className="hamburger-btn__icon"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            role="img"
+            aria-hidden="true"
+          >
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
         </button>
 
         <div
@@ -50,12 +72,14 @@ export default function Header({ theme, onToggleTheme, onOpenSchedule, onGoHome 
         </div>
       </div>
 
-      <Drawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title="Navigation"
-        links={links}
-      />
+      <div id="app-drawer">
+        <Drawer
+          open={drawerOpen}
+          onClose={closeMenu}
+          title="Navigation"
+          links={links}
+        />
+      </div>
     </header>
   );
 }

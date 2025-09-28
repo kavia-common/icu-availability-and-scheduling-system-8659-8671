@@ -28,7 +28,22 @@
   border-radius: var(--radius-8);
   background: #fff;
   cursor: pointer;
-  &:focus-visible { @include m.focus-ring; }
+  color: var(--text-primary);
+  transition: background-color .15s ease, transform .1s ease, border-color .15s ease;
+
+  &:hover {
+    background: var(--bg-muted);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  &:focus-visible {
+    @include m.focus-ring;
+  }
+
+  &__icon {
+    display: block;
+  }
 }
 
 .brand {
