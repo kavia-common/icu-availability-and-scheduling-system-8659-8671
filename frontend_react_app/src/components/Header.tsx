@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Header.scss";
 import "./HeaderLocalOverrides.scss";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   userId?: string; // kept for compatibility with previous version
@@ -15,7 +16,7 @@ interface HeaderProps {
  * Header: App top bar with a left hamburger that opens a dropdown menu including "Schedule".
  * - Minimalist logic: useState for open/close
  * - Accessibility: keyboard accessible, closes on outside click or Esc
- * - Navigation: prefers onOpenSchedule prop; falls back to hash route (#/schedule)
+ * - Navigation: now uses react-router-dom's useNavigate for SPA navigation.
  */
 export const Header: React.FC<HeaderProps> = ({
   theme,
@@ -26,6 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
 
   // Close on click outside and Esc
   useEffect(() => {
@@ -53,17 +55,20 @@ export const Header: React.FC<HeaderProps> = ({
   }, [menuOpen]);
 
   const navigateSchedule = () => {
-    if (onOpenSchedule) onOpenSchedule();
-    else {
-      // TODO: if actual route differs, update here (eg. "/schedule-icu")
-      window.location.hash = "/schedule";
+    if (onOpenSchedule) {
+      onOpenSchedule();
+    } else {
+      navigate("/schedule");
     }
     setMenuOpen(false);
   };
 
   const navigateHome = () => {
-    if (onGoHome) onGoHome();
-    else window.location.hash = "/";
+    if (onGoHome) {
+      onGoHome();
+    } else {
+      navigate("/");
+    }
     setMenuOpen(false);
   };
 
