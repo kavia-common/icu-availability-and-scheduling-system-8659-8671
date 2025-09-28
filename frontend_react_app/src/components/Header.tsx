@@ -4,20 +4,15 @@ import "./Header.scss";
 
 interface HeaderProps {
   theme: "ocean" | "dark";
-  onToggleTheme: () => void; // kept for compatibility though not surfaced in UI per requirements
+  onToggleTheme: () => void; // preserve prop for compatibility
   onOpenSchedule: () => void;
   onGoHome: () => void;
 }
 
 /**
  * PUBLIC_INTERFACE
- * ICUHeader: Ocean Professional header for ICU Scheduler.
- * - Left: Hamburger button opens an accessible Drawer.
- * - Center: App logo + name ("ICU Scheduler").
- * - Right: User avatar with dropdown (Logout).
- * Accessibility:
- *  - Hamburger has aria attributes and restores focus on close.
- *  - Avatar menu is button-activated, dismisses on Esc/click-out, arrow key navigation, and tab-cycling supported.
+ * Header: Ocean Professional header with hamburger-driven Drawer and user menu.
+ * Structure and style match the user's latest code; only the menu icon is a standard hamburger.
  */
 export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -34,15 +29,17 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => {
     setDrawerOpen(false);
+    // Restore focus to hamburger after drawer closes
     setTimeout(() => hamburgerRef.current?.focus(), 0);
   };
 
-  const toggleMenu = () => setMenuOpen((v) => !v);
+  const toggleMenu = () => setMenuOpen(v => !v);
   const closeMenu = () => setMenuOpen(false);
 
-  // Click outside to close user menu
+  // Close user menu on outside click or Esc
   useEffect(() => {
     if (!menuOpen) return;
+
     const onDocClick = (e: MouseEvent) => {
       if (!menuRef.current || !menuButtonRef.current) return;
       const target = e.target as Node;
@@ -50,6 +47,7 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
         setMenuOpen(false);
       }
     };
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -57,6 +55,7 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
         setTimeout(() => menuButtonRef.current?.focus(), 0);
       }
     };
+
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -70,15 +69,13 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
     const items = menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
     if (!items || items.length === 0) return;
 
-    const idx = Array.from(items).findIndex((el) => el === document.activeElement);
+    const idx = Array.from(items).findIndex(el => el === document.activeElement);
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      const next = items[(idx + 1 + items.length) % items.length];
-      next.focus();
+      items[(idx + 1 + items.length) % items.length].focus();
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      const prev = items[(idx - 1 + items.length) % items.length];
-      prev.focus();
+      items[(idx - 1 + items.length) % items.length].focus();
     } else if (e.key === "Home") {
       e.preventDefault();
       items[0].focus();
@@ -89,15 +86,14 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
   };
 
   const handleLogout = () => {
-    // Placeholder: wire actual logout when auth exists
-    // For now simply close the menu
+    // Placeholder for auth integration
     setMenuOpen(false);
   };
 
   return (
     <header className="icu-header" role="banner" aria-label="ICU Scheduler header">
       <div className="icu-header__inner">
-        {/* Left: Hamburger */}
+        {/* Left: Hamburger (standard accessible SVG icon) */}
         <button
           ref={hamburgerRef}
           type="button"
@@ -108,7 +104,6 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
           className="icu-header__hamburger"
           onClick={openDrawer}
         >
-          {/* Inline SVG hamburger icon, accessible and dependency-free */}
           <svg
             className="icu-header__hamburger-icon"
             width="22"
@@ -131,7 +126,6 @@ export default function Header({ onOpenSchedule, onGoHome }: HeaderProps) {
           aria-label="Go to home"
         >
           <div className="icu-brand__logo" aria-hidden="true">
-            {/* Simple monogram in brand gradient */}
             <span className="icu-brand__logo-text">ICU</span>
           </div>
           <div className="icu-brand__text">
