@@ -1,10 +1,58 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Availability, Doctor, ICU, TimeRange, Weekday } from "../types/domain";
-import { createAvailability, deleteAvailability, listAvailabilities, listDoctors, listICUs } from "../services/api";
 import "./AvailabilityManager.scss";
 
+/**
+ * Backend API helpers using fetch to communicate with server endpoints.
+ * These assume a proxy or same-origin API at /api/*.
+ */
 type EntityType = "doctor" | "icu";
-const weekdays: Weekday[] = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+type ApiAvailability = Availability & { date?: string }; // allow date if backend provides it
+
+const weekdays: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; data?: T; error?: string }> {
+  try {
+    const res = await fetch(url, {
+      headers: { "Content-Type": "application/json" },
+      ...init,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      return { ok: false, error: text || `Request failed: ${res.status}` };
+    }
+    const ct = res.headers.get("content-type") || "";
+    const data = ct.includes("application/json") ? ((await res.json()) as T) : (undefined as unknown as T);
+    return { ok: true, data };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "Network error" };
+  }
+}
+
+async function fetchDoctors() {
+  return api<Doctor[]>("/api/doctors");
+}
+async function fetchICUs() {
+  return api<ICU[]>("/api/icus");
+}
+async function fetchAvailabilities() {
+  return api<ApiAvailability[]>("/api/availability");
+}
+async function createAvailabilityApi(payload: {
+  entityType: EntityType;
+  entityId: string;
+  day: Weekday;
+  date?: string | null;
+  range: TimeRange;
+}) {
+  return api<ApiAvailability>("/api/availability", { method: "POST", body: JSON.stringify(payload) });
+}
+async function updateAvailabilityApi(id: string, payload: Partial<{ entityType: EntityType; entityId: string; day: Weekday; date?: string | null; range: TimeRange }>) {
+  return api<ApiAvailability>(`/api/availability/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+async function deleteAvailabilityApi(id: string) {
+  return api<{ success: boolean }>(`/api/availability/${id}`, { method: "DELETE" });
+}
 
 interface NewAvailabilityState {
   entityType: EntityType;
@@ -19,36 +67,47 @@ const initialState: NewAvailabilityState = {
   entityType: "doctor",
   entityId: "",
   day: "Mon",
-  date: "", // empty means not filtering by specific date
+  date: "",
   start: "09:00",
-  end: "17:00"
+  end: "17:00",
 };
 
 // PUBLIC_INTERFACE
 export default function AvailabilityManager() {
-  /** Manage doctor/ICU availabilities: add and remove with a typed form. */
+  /**
+   * Manage doctor/ICU availabilities with full backend CRUD.
+   * - Loads doctors, ICUs, and existing availability from /api on mount
+   * - Creates new entries via POST
+   * - Supports inline edit of time range and date via PUT
+   * - Deletes via DELETE
+   * - Shows robust loading and error states
+   */
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [icus, setICUs] = useState<ICU[]>([]);
-  const [items, setItems] = useState<Availability[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<ApiAvailability[]>([]);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<NewAvailabilityState>(initialState);
+  const [updatingId, setUpdatingId] = useState<string | null>(null); // for UX: show "Saving..." on edited row
 
-  const entities = useMemo(() => (form.entityType === "doctor" ? doctors : icus), [form.entityType, doctors, icus]);
+  const entities = useMemo(
+    () => (form.entityType === "doctor" ? doctors : icus),
+    [form.entityType, doctors, icus]
+  );
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
-      const [drRes, icuRes, avRes] = await Promise.all([listDoctors(), listICUs(), listAvailabilities()]);
+      const [drRes, icuRes, avRes] = await Promise.all([fetchDoctors(), fetchICUs(), fetchAvailabilities()]);
       if (!mounted) return;
-      if (drRes.ok && icuRes.ok && avRes.ok) {
+      if (!drRes.ok || !icuRes.ok || !avRes.ok) {
+        setError(drRes.error || icuRes.error || avRes.error || "Failed to load data.");
+      } else {
         setDoctors(drRes.data || []);
         setICUs(icuRes.data || []);
         setItems(avRes.data || []);
-      } else {
-        setError(drRes.error || icuRes.error || avRes.error || "Failed to load data.");
       }
       setLoading(false);
     })();
@@ -59,15 +118,21 @@ export default function AvailabilityManager() {
 
   const onChange = (patch: Partial<NewAvailabilityState>) => setForm((prev) => ({ ...prev, ...patch }));
 
+  const validateForm = () => {
+    if (!form.entityId) return "Please select an entity.";
+    if (!form.day) return "Please select a weekday.";
+    if (!form.start || !form.end) return "Please select a start and end time.";
+    if (form.start >= form.end) return "End time must be later than start time.";
+    // date optional; if present, expect YYYY-MM-DD
+    return null;
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!form.entityId) {
-      setError("Please select an entity.");
-      return;
-    }
-    if (form.start >= form.end) {
-      setError("End time must be later than start time.");
+    const err = validateForm();
+    if (err) {
+      setError(err);
       return;
     }
     setSubmitting(true);
@@ -75,11 +140,10 @@ export default function AvailabilityManager() {
       entityType: form.entityType,
       entityId: form.entityId,
       day: form.day,
-      // Note: the mock API Availability model doesn't include "date",
-      // but we keep it locally and could pass it along to a real backend.
-      range: { start: form.start, end: form.end } as TimeRange
+      date: form.date || null,
+      range: { start: form.start, end: form.end } as TimeRange,
     };
-    const res = await createAvailability(payload as Omit<Availability, "id">);
+    const res = await createAvailabilityApi(payload);
     if (res.ok && res.data) {
       setItems((prev) => [res.data!, ...prev]);
       setForm((f) => ({ ...f, entityId: "" }));
@@ -90,9 +154,44 @@ export default function AvailabilityManager() {
   };
 
   const onRemove = async (id: string) => {
-    const res = await deleteAvailability(id);
-    if (res.ok) setItems((prev) => prev.filter((i) => i.id !== id));
-    else setError(res.error || "Failed to delete.");
+    setError(null);
+    const res = await deleteAvailabilityApi(id);
+    if (res.ok) {
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } else {
+      setError(res.error || "Failed to delete.");
+    }
+  };
+
+  // Inline edit handlers (time and date)
+  const onInlineChange = (id: string, patch: Partial<{ date?: string; range?: TimeRange }>) => {
+    setItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, ...patch, range: patch.range ? { ...patch.range } : it.range } : it))
+    );
+  };
+
+  const onInlineSave = async (id: string) => {
+    setError(null);
+    const current = items.find((i) => i.id === id);
+    if (!current) return;
+    if (current.range.start >= current.range.end) {
+      setError("End time must be later than start time.");
+      return;
+    }
+    setUpdatingId(id);
+    const res = await updateAvailabilityApi(id, {
+      date: current.date ?? null,
+      range: current.range,
+    });
+    if (!res.ok) {
+      setError(res.error || "Failed to update availability.");
+    } else {
+      // Ensure local state reflects backend response (which could normalize values)
+      if (res.data) {
+        setItems((prev) => prev.map((i) => (i.id === id ? res.data! : i)));
+      }
+    }
+    setUpdatingId(null);
   };
 
   return (
@@ -100,7 +199,7 @@ export default function AvailabilityManager() {
       <h2 className="avail__title">Manage Availability</h2>
       <p className="avail__desc">Add or remove availability windows for doctors and ICU rooms.</p>
 
-      <form onSubmit={onSubmit} className="avail__grid">
+      <form onSubmit={onSubmit} className="avail__grid" aria-label="Create availability form">
         <div className="avail__field">
           <label>Entity Type</label>
           <select
@@ -156,7 +255,12 @@ export default function AvailabilityManager() {
 
         <div className="avail__field">
           <label>Start</label>
-          <input className="input" type="time" value={form.start} onChange={(e) => onChange({ start: e.target.value })} />
+          <input
+            className="input"
+            type="time"
+            value={form.start}
+            onChange={(e) => onChange({ start: e.target.value })}
+          />
         </div>
 
         <div className="avail__field">
@@ -182,7 +286,7 @@ export default function AvailabilityManager() {
               <th>Day</th>
               <th>Date</th>
               <th>Time</th>
-              <th></th>
+              <th className="right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -199,27 +303,52 @@ export default function AvailabilityManager() {
                 </td>
               </tr>
             ) : (
-              items.map((a) => (
-                <tr key={a.id}>
-                  <td>{a.entityType.toUpperCase()}</td>
-                  <td>
-                    {a.entityType === "doctor"
-                      ? doctors.find((d) => d.id === a.entityId)?.name || a.entityId
-                      : icus.find((i) => i.id === a.entityId)?.name || a.entityId}
-                  </td>
-                  <td>{a.day}</td>
-                  {/* Since Availability type doesn't contain date, show N/A for now. If backend adds date, wire it here. */}
-                  <td className="text-muted">{form.date ? form.date : "—"}</td>
-                  <td>
-                    {a.range.start} - {a.range.end}
-                  </td>
-                  <td className="right">
-                    <button className="btn" onClick={() => onRemove(a.id)}>
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))
+              items.map((a) => {
+                const entityName =
+                  a.entityType === "doctor"
+                    ? doctors.find((d) => d.id === a.entityId)?.name || a.entityId
+                    : icus.find((i) => i.id === a.entityId)?.name || a.entityId;
+                return (
+                  <tr key={a.id}>
+                    <td>{a.entityType.toUpperCase()}</td>
+                    <td>{entityName}</td>
+                    <td>{a.day}</td>
+                    <td>
+                      <input
+                        className="input"
+                        type="date"
+                        value={a.date || ""}
+                        onChange={(e) => onInlineChange(a.id, { date: e.target.value || "" })}
+                        onBlur={() => onInlineSave(a.id)}
+                      />
+                    </td>
+                    <td style={{ display: "flex", gap: 8 }}>
+                      <input
+                        className="input"
+                        type="time"
+                        value={a.range.start}
+                        onChange={(e) => onInlineChange(a.id, { range: { ...a.range, start: e.target.value } })}
+                        onBlur={() => onInlineSave(a.id)}
+                        aria-label="Start time"
+                      />
+                      <span style={{ alignSelf: "center" }}>-</span>
+                      <input
+                        className="input"
+                        type="time"
+                        value={a.range.end}
+                        onChange={(e) => onInlineChange(a.id, { range: { ...a.range, end: e.target.value } })}
+                        onBlur={() => onInlineSave(a.id)}
+                        aria-label="End time"
+                      />
+                    </td>
+                    <td className="right">
+                      <button className="btn" onClick={() => onRemove(a.id)} disabled={updatingId === a.id}>
+                        {updatingId === a.id ? "Saving..." : "Remove"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
