@@ -150,19 +150,23 @@ export default function ScheduleICU() {
           ))}
 
           {/* Body rows: each row is [time gutter] + 7 day cells */}
-          {hours.map((h) => (
+          {hours.map((h, rowIdx) => (
             <React.Fragment key={h}>
-              <div className="sched-grid__timecell" role="rowheader">
+              <div
+                className={`sched-grid__timecell${rowIdx === 0 ? " sched-grid__timecell--first" : ""}`}
+                role="rowheader"
+              >
                 {h}
               </div>
 
               {days.map((d) => {
                 const date = formatDate(d);
                 const booked = cellHasBooking(date, h);
+                const firstRowClass = rowIdx === 0 ? " sched-grid__cell--first" : "";
                 return (
                   <button
                     key={d.toDateString() + h}
-                    className={`sched-grid__cell booking-anchor${booked ? " is-booked" : ""}`}
+                    className={`sched-grid__cell booking-anchor${firstRowClass}${booked ? " is-booked" : ""}`}
                     role="gridcell"
                     aria-label={`${d.toDateString()} at ${h}${booked ? " (has booking)" : ""}`}
                     onClick={() => handleCellClick(d, h)}

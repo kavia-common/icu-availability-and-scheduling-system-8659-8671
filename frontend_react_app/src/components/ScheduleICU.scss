@@ -68,7 +68,10 @@ $row-h: 60px;
   column-gap: 0;
   row-gap: 0;
   background: #fff;
-  border: 1px solid var(--grid-line);
+  /* Avoid double top border with sticky header */
+  border-left: 1px solid var(--grid-line);
+  border-right: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
   border-radius: 0;
   overflow: hidden;
 
@@ -77,6 +80,7 @@ $row-h: 60px;
     position: sticky;
     top: 0;
     background: #fff;
+    z-index: 2;
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
     height: var(--header-height);
@@ -88,6 +92,7 @@ $row-h: 60px;
     position: sticky;
     top: 0;
     background: #fff;
+    z-index: 2;
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
     height: var(--header-height);
@@ -96,6 +101,7 @@ $row-h: 60px;
     justify-content: flex-start;
     padding-left: var(--col-pad);
     padding-right: var(--col-pad);
+    line-height: 1; /* avoid extra height from font metrics */
 
     .dw {
       font-size: 12px;
@@ -124,10 +130,16 @@ $row-h: 60px;
     background: #fff;
   }
 
+  /* Remove top border on the very first body row to avoid double seam under sticky header */
+  &__timecell--first {
+    border-top: 0 !important;
+  }
+
   /* Interactive cells for each day/time slot */
   &__cell {
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
+    border-top: 0;
     background: var(--bg-canvas, #fff);
     cursor: pointer;
     position: relative;
@@ -140,6 +152,10 @@ $row-h: 60px;
   /* Optional emphasis for booked cells */
   .is-booked {
     background-image: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%);
+  }
+
+  .sched-grid__cell--first {
+    border-top: 0 !important;
   }
 }
 
