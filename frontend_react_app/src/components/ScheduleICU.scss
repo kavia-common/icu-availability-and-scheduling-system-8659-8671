@@ -68,7 +68,8 @@ $row-h: 60px;
   column-gap: 0;
   row-gap: 0;
   background: #fff;
-  /* Avoid double top border with sticky header by drawing the top edge on the sticky header only */
+
+  /* Outer lattice: draw a single outer border; avoid header/body double line at the seam */
   border-left: 1px solid var(--grid-line);
   border-right: 1px solid var(--grid-line);
   border-bottom: 1px solid var(--grid-line);
@@ -76,16 +77,21 @@ $row-h: 60px;
   border-radius: 0;
   overflow: hidden;
 
+  /* Ensure the first implicit grid row (the sticky header row) has no extra spacing */
+  > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
   /* Header spacer cell over the time gutter */
   &__timehdr {
     position: sticky;
     top: 0;
-    /* Normalize sticky background and elevation above body cells */
     background: #fff;
     z-index: 3; /* ensure it stays above body cells */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    /* Draw the lattice top border on sticky header to avoid double seam */
+    /* Draw a single top border on the sticky row to visually close the lattice */
     border-top: 1px solid var(--grid-line);
     height: var(--header-height);
     grid-column: 1 / 2;
@@ -95,12 +101,11 @@ $row-h: 60px;
   &__dayhdr {
     position: sticky;
     top: 0;
-    /* Normalize sticky header background and stacking for cross-browser */
     background: #fff;
     z-index: 3; /* above body rows and booking dots */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    /* Draw the lattice top border on sticky header to avoid double seam */
+    /* Keep only one top border (on header). Body first row won't draw a top border. */
     border-top: 1px solid var(--grid-line);
     height: var(--header-height);
     display: flex;
@@ -126,9 +131,10 @@ $row-h: 60px;
 
   /* Time gutter hour labels */
   &__timecell {
-    /* Avoid double border at top by not drawing border-top on first body row (handled via modifier class) */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
+    /* Do not render an additional top border on the first time row; header already has it */
+    border-top: 0;
     background: #fff;
     display: flex;
     align-items: center;
@@ -138,14 +144,15 @@ $row-h: 60px;
     color: var(--text-tertiary);
   }
 
-  /* Remove top border on the very first body row to avoid double seam under sticky header */
+  /* First body row: ensure top edge is not drawn to prevent double seam and remove any visual gap */
   &__timecell--first {
     border-top: 0 !important;
+    margin-top: 0 !important;
   }
 
   /* Interactive cells for each day/time slot */
   &__cell {
-    /* Draw only right and bottom; top is suppressed for first row to eliminate double seam */
+    /* Draw right + bottom; body top borders are handled by the lattice except on first row (suppressed) */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
     border-top: 1px solid var(--grid-line);
@@ -158,15 +165,25 @@ $row-h: 60px;
     &:focus-visible { @include m.focus-ring; }
   }
 
-  /* When first body row: suppress top border so header and first row touch without double thickness */
+  /* When first body row: suppress top border so header and first row touch without double thickness or gap */
   &__cell--first {
     border-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* Defensive: if any UA stylesheet adds border-collapse spacing, neutralize top margin/padding on first body row cells */
+  &__cell--first,
+  &__timecell--first {
+    padding-top: 0;
   }
 
   /* Optional emphasis for booked cells */
   .is-booked {
     background-image: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%);
   }
+
+  /* Also ensure the very first grid row after sticky header doesn't introduce a gap via nth-child selectors */
+  > .sched-grid__timecell:nth-child(#{1 + 0}) { /* no-op, kept for clarity */ }
 }
 
 /* Absolute booking indicator aligned to shared column anchor */
