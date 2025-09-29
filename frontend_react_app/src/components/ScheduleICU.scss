@@ -68,10 +68,11 @@ $row-h: 60px;
   column-gap: 0;
   row-gap: 0;
   background: #fff;
-  /* Avoid double top border with sticky header */
+  /* Avoid double top border with sticky header by drawing the top edge on the sticky header only */
   border-left: 1px solid var(--grid-line);
   border-right: 1px solid var(--grid-line);
   border-bottom: 1px solid var(--grid-line);
+  border-top: 0;
   border-radius: 0;
   overflow: hidden;
 
@@ -79,10 +80,13 @@ $row-h: 60px;
   &__timehdr {
     position: sticky;
     top: 0;
+    /* Normalize sticky background and elevation above body cells */
     background: #fff;
-    z-index: 2;
+    z-index: 3; /* ensure it stays above body cells */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
+    /* Draw the lattice top border on sticky header to avoid double seam */
+    border-top: 1px solid var(--grid-line);
     height: var(--header-height);
     grid-column: 1 / 2;
   }
@@ -91,10 +95,13 @@ $row-h: 60px;
   &__dayhdr {
     position: sticky;
     top: 0;
+    /* Normalize sticky header background and stacking for cross-browser */
     background: #fff;
-    z-index: 2;
+    z-index: 3; /* above body rows and booking dots */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
+    /* Draw the lattice top border on sticky header to avoid double seam */
+    border-top: 1px solid var(--grid-line);
     height: var(--header-height);
     display: flex;
     align-items: center;
@@ -119,15 +126,16 @@ $row-h: 60px;
 
   /* Time gutter hour labels */
   &__timecell {
+    /* Avoid double border at top by not drawing border-top on first body row (handled via modifier class) */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     padding: 0 8px;
     font-size: 12px;
     color: var(--text-tertiary);
-    background: #fff;
   }
 
   /* Remove top border on the very first body row to avoid double seam under sticky header */
@@ -137,9 +145,10 @@ $row-h: 60px;
 
   /* Interactive cells for each day/time slot */
   &__cell {
+    /* Draw only right and bottom; top is suppressed for first row to eliminate double seam */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    border-top: 0;
+    border-top: 1px solid var(--grid-line);
     background: var(--bg-canvas, #fff);
     cursor: pointer;
     position: relative;
@@ -149,13 +158,14 @@ $row-h: 60px;
     &:focus-visible { @include m.focus-ring; }
   }
 
+  /* When first body row: suppress top border so header and first row touch without double thickness */
+  &__cell--first {
+    border-top: 0 !important;
+  }
+
   /* Optional emphasis for booked cells */
   .is-booked {
     background-image: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%);
-  }
-
-  .sched-grid__cell--first {
-    border-top: 0 !important;
   }
 }
 
