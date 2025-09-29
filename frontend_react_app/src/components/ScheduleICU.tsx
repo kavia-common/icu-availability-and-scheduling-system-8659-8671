@@ -7,7 +7,7 @@ import BookingModal, { BookingPayload } from "./BookingModal/BookingModal";
 /**
  * PUBLIC_INTERFACE
  * ScheduleICU: Weekly calendar UI. Clicking a cell opens BookingModal with date/time prefilled.
- * Now shows a subtle visual mark in cells that have at least one booking.
+ * Booking marks are vertically aligned with their weekday headers using a shared column anchor.
  */
 export default function ScheduleICU() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -32,7 +32,6 @@ export default function ScheduleICU() {
       if (schedRes.ok && schedRes.data) {
         const next = new Set<string>();
         schedRes.data.forEach((s) => {
-          // Mark each hour block covered by the booking's start time
           const k = `${s.date}|${s.time.start}`;
           next.add(k);
         });
@@ -89,12 +88,9 @@ export default function ScheduleICU() {
 
   // PUBLIC_INTERFACE
   const onSave = async (payload: BookingPayload) => {
-    // Create booking via mock API (createBooking) so we can also refresh local state.
-    // Map modal payload to API request shape.
     const doctorId = payload.doctorId || (doctors[0]?.id ?? "");
     const icuId = payload.orId || (rooms[0]?.id ?? "");
     if (!doctorId || !icuId) {
-      // Minimal guard: if nothing is selected, just close modal without changing state
       setModalOpen(false);
       return;
     }
@@ -106,7 +102,6 @@ export default function ScheduleICU() {
       notes: payload.notes,
     });
 
-    // Immediately reflect in local booked cells for the start slot
     setBookedCells((prev) => {
       const next = new Set(prev);
       next.add(`${payload.date}|${payload.start}`);
@@ -120,7 +115,6 @@ export default function ScheduleICU() {
 
   return (
     <section className="sched">
-      {/* Elevated card wrapper for the entire Schedule ICU module */}
       <div className="sched__card surface">
         <div className="sched__toolbar">
           <div className="sched__crumbs">
@@ -139,39 +133,45 @@ export default function ScheduleICU() {
           <h2 className="sched__month">{monthLabel}</h2>
         </div>
 
+        {/* Grid container: first row is header; subsequent rows are time x day cells */}
         <div className="sched-grid" role="grid" aria-label="ICU weekly calendar">
+          {/* Sticky header: time gutter spacer + 7 weekday headers with shared padding */}
           <div className="sched-grid__timehdr" />
           {days.map((d) => (
-            <div key={d.toDateString()} className="sched-grid__dayhdr" role="columnheader" aria-label={d.toDateString()}>
-              <div className="dw">{new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d)}</div>
-              <div className="dn">{d.getDate()}</div>
+            <div
+              key={d.toDateString()}
+              className="sched-grid__dayhdr"
+              role="columnheader"
+              aria-label={d.toDateString()}
+            >
+              <span className="dw">{new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d)}</span>
+              <span className="dn">{d.getDate()}</span>
             </div>
           ))}
 
+          {/* Body rows: each row is [time gutter] + 7 day cells */}
           {hours.map((h) => (
             <React.Fragment key={h}>
               <div className="sched-grid__timecell" role="rowheader">
                 {h}
               </div>
+
               {days.map((d) => {
                 const date = formatDate(d);
                 const booked = cellHasBooking(date, h);
                 return (
                   <button
                     key={d.toDateString() + h}
-                    className={`sched-grid__cell${booked ? " is-booked" : ""}`}
+                    className={`sched-grid__cell booking-anchor${booked ? " is-booked" : ""}`}
                     role="gridcell"
                     aria-label={`${d.toDateString()} at ${h}${booked ? " (has booking)" : ""}`}
-                    aria-describedby={booked ? `mark-${date}-${h}` : undefined}
                     onClick={() => handleCellClick(d, h)}
                   >
                     {booked && (
                       <span
-                        id={`mark-${date}-${h}`}
-                        className="sched-grid__mark"
-                        aria-label="Has booking"
-                        role="img"
+                        className="booking-mark"
                         aria-hidden={false}
+                        role="img"
                         title="Has booking"
                       />
                     )}

@@ -16,12 +16,23 @@
 /* Enforce no rounded corners anywhere within schedule module */
 .sched, .sched * { border-radius: 0 !important; }
 
+:root {
+  /* single source of truth for lattice + vertical anchor */
+  --grid-line: var(--grid-major, #E5E7EB);
+  --col-pad: 12px;         /* shared padding for header and anchor offset */
+  --mark-offset: 12px;     /* aligns booking marks with weekday header content */
+  --header-height: 40px;   /* sticky header height */
+}
+
+/* constants for grid sizing */
+$gutter: 80px; /* time gutter width */
+$row-h: 60px;
+
+/* Wrapper/card for the Schedule ICU area */
 .sched {
-  /* Card wrapper for Schedule ICU area */
   &__card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    /* Absolutely no rounding on the wrapper per notes */
     border-radius: 0;
     box-shadow: var(--shadow-md);
     padding: 16px;
@@ -43,66 +54,54 @@
   &__header { margin: 8px 0 12px; }
   &__month {
     margin: 0;
-    font-size: 20px; /* month title ~20px per notes */
+    font-size: 20px;
     font-weight: 600;
     color: var(--text-primary);
   }
 }
 
-/* Calendar layout per schedule_month_grid_design_notes:
-   - 7 equal-width day columns (repeat(7, 1fr))
-   - Shared grid structure for header and body to guarantee exact alignment
-   - No rounded corners anywhere
-   - Uniform hairline lattice using a single border variable
-*/
-$gutter: 80px;
-$row-h: 60px; /* closer to design suggestion (60px baseline) */
-
-:root {
-  /* ensure grid line color variable exists as single source of truth */
-  --grid-line: var(--grid-major, #E5E7EB);
-}
-
-/* One parent grid including a sticky header row, with identical column tracks for header and body */
+/* Unified calendar grid (time gutter + 7 day columns) with sticky weekday header row */
 .sched-grid {
   display: grid;
-  grid-template-columns: $gutter repeat(7, 1fr); /* time gutter + 7 equal columns */
+  grid-template-columns: $gutter repeat(7, 1fr);
   grid-auto-rows: $row-h;
   column-gap: 0;
   row-gap: 0;
   background: #fff;
-  /* Outer lattice: uniform border and no rounding */
   border: 1px solid var(--grid-line);
   border-radius: 0;
   overflow: hidden;
 
-  /* Header spacer cell for gutter */
+  /* Header spacer cell over the time gutter */
   &__timehdr {
     position: sticky;
     top: 0;
     background: #fff;
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    height: 40px; /* header height baseline */
+    height: var(--header-height);
     grid-column: 1 / 2;
   }
 
-  /* Day header cells (7 of them); share the same column tracks, no extra padding that could offset alignment */
+  /* Day header cells — padding-left matches anchor offset for visual connection */
   &__dayhdr {
     position: sticky;
     top: 0;
     background: #fff;
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    height: 40px;
-    display: grid;
-    place-items: center;
-    text-align: center;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: var(--col-pad);
+    padding-right: var(--col-pad);
 
     .dw {
       font-size: 12px;
       color: var(--text-tertiary);
       line-height: 1.2;
+      margin-right: 6px;
     }
     .dn {
       font-size: 14px;
@@ -112,22 +111,21 @@ $row-h: 60px; /* closer to design suggestion (60px baseline) */
     }
   }
 
-  /* Time gutter cells (hour labels) */
+  /* Time gutter hour labels */
   &__timecell {
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
     display: flex;
     align-items: center;
-    justify-content: flex-end; /* right-align digits */
+    justify-content: flex-end;
     padding: 0 8px;
     font-size: 12px;
     color: var(--text-tertiary);
     background: #fff;
   }
 
-  /* Interactive day/time cells */
+  /* Interactive cells for each day/time slot */
   &__cell {
-    /* Draw lattice using single-pixel lines; avoid double thickness by using right/bottom edges */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
     background: var(--bg-canvas, #fff);
@@ -139,23 +137,38 @@ $row-h: 60px; /* closer to design suggestion (60px baseline) */
     &:focus-visible { @include m.focus-ring; }
   }
 
-  /* Mark for booked cells: small accent dot in top-right corner */
-  &__mark {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--accent);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-  }
-
-  /* Optional modifier to slightly emphasize booked cells without heavy fill */
+  /* Optional emphasis for booked cells */
   .is-booked {
-    /* subtle background to keep it visible yet not overpowering */
     background-image: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%);
   }
+}
+
+/* Absolute booking indicator aligned to shared column anchor */
+.booking-anchor {
+  position: relative;
+
+  /* faint dashed guide to visually connect header and bookings */
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--mark-offset);
+    border-left: 1px dashed rgba(37, 99, 235, 0.16);
+    pointer-events: none;
+  }
+}
+
+/* Booking mark (dot) sits on the same vertical as the weekday header content */
+.booking-mark {
+  position: absolute;
+  left: var(--mark-offset);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.10);
+  transform: translateX(-50%); /* center the dot on the guide */
 }
 
 /* Responsive refinements */
@@ -164,5 +177,5 @@ $row-h: 60px; /* closer to design suggestion (60px baseline) */
   .sched-grid { grid-auto-rows: 56px; }
 }
 @media (max-width: 768px) {
-  .sched-grid { grid-template-columns: 64px repeat(7, 1fr); } /* narrower gutter on tablets */
+  .sched-grid { grid-template-columns: 64px repeat(7, 1fr); }
 }
