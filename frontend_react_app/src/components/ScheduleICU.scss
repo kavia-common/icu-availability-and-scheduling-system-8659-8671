@@ -16,20 +16,8 @@
 /* Enforce no rounded corners anywhere within schedule module */
 .sched, .sched * { border-radius: 0 !important; }
 
-:root {
-  /* single source of truth for lattice + vertical anchor */
-  --grid-line: var(--grid-major, #E5E7EB);
-  --col-pad: 12px;         /* shared padding for header and anchor offset */
-  --mark-offset: 12px;     /* aligns booking marks with weekday header content */
-  --header-height: 40px;   /* sticky header height */
-}
-
-/* constants for grid sizing */
-$gutter: 80px; /* time gutter width */
-$row-h: 60px;
-
-/* Wrapper/card for the Schedule ICU area */
 .sched {
+  /* Card wrapper for Schedule ICU area */
   &__card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -60,7 +48,14 @@ $row-h: 60px;
   }
 }
 
-/* Unified calendar grid (time gutter + 7 day columns) with sticky weekday header row */
+$gutter: 80px;
+$row-h: 60px;
+
+:root {
+  --grid-line: var(--grid-major, #E5E7EB);
+}
+
+/* Main calendar grid */
 .sched-grid {
   display: grid;
   grid-template-columns: $gutter repeat(7, 1fr);
@@ -68,164 +63,119 @@ $row-h: 60px;
   column-gap: 0;
   row-gap: 0;
   background: #fff;
-
-  /* Outer lattice: draw a single outer border; avoid header/body double line at the seam */
-  border-left: 1px solid var(--grid-line);
-  border-right: 1px solid var(--grid-line);
-  border-bottom: 1px solid var(--grid-line);
-  /* Do not draw an extra top border on container; header row will close the top edge */
-  border-top: 0;
+  border: 1px solid var(--grid-line);
   border-radius: 0;
   overflow: hidden;
 
-  /* Normalize any spacing that might create an apparent gap at the header/body seam */
-  margin-top: 0 !important;
-  padding-top: 0 !important;
+  *, *::before, *::after { box-sizing: border-box; }
 
-  /* Ensure the first implicit grid row (the sticky header row) has no extra spacing */
-  > *:first-child {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  /* Header spacer cell over the time gutter */
+  /* Header spacer cell for gutter */
   &__timehdr {
     position: sticky;
     top: 0;
     background: #fff;
-    z-index: 3; /* ensure it stays above body cells */
     border-right: 1px solid var(--grid-line);
-    /* Single separating line between header and first body row */
+    /* Ensure the header contributes exactly one bottom border for the seam */
     border-bottom: 1px solid var(--grid-line);
-    /* Close the lattice top edge on the sticky header row only */
-    border-top: 1px solid var(--grid-line);
-    height: var(--header-height);
+    /* Also close top edge since container border-top is unified */
+    border-top: 0;
+    height: 40px;
     grid-column: 1 / 2;
+    z-index: 3;
+    margin: 0; padding: 0; /* zero out to avoid any visual gap */
   }
 
-  /* Day header cells — padding-left matches anchor offset for visual connection */
+  /* Day header cells */
   &__dayhdr {
     position: sticky;
     top: 0;
     background: #fff;
-    z-index: 3; /* above body rows and booking dots */
     border-right: 1px solid var(--grid-line);
-    /* Single separating line between header and first body row */
+    /* Single line separating header from first data row */
     border-bottom: 1px solid var(--grid-line);
-    /* Close the lattice top edge on the sticky header row only (avoid double with grid body) */
-    border-top: 1px solid var(--grid-line);
-    height: var(--header-height);
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding-left: var(--col-pad);
-    padding-right: var(--col-pad);
-    line-height: 1; /* avoid extra height from font metrics */
+    border-top: 0;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    z-index: 2;
+    margin: 0; padding: 0; /* zero out to avoid any visual gap */
 
-    .dw {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      line-height: 1.2;
-      margin-right: 6px;
-    }
-    .dn {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--day-header-text, var(--text-primary));
-      line-height: 1.2;
-    }
+    .dw { font-size: 12px; color: var(--text-tertiary); line-height: 1.2; }
+    .dn { font-size: 14px; font-weight: 600; color: var(--day-header-text, var(--text-primary)); line-height: 1.2; }
   }
 
-  /* Time gutter hour labels */
+  /* Time gutter cells (hour labels) */
   &__timecell {
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    /* No top border on first body row to prevent double line under header */
-    border-top: 1px solid var(--grid-line);
-    background: #fff;
+    /* Remove top border for the first data row so it butts up to header line with no double thickness */
+    border-top: 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     padding: 0 8px;
     font-size: 12px;
     color: var(--text-tertiary);
+    background: #fff;
+    margin: 0; /* defensive reset */
   }
 
-  /* First body row: ensure top edge is not drawn to prevent double seam and remove any visual gap */
-  &__timecell--first {
-    border-top: 0 !important;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  /* Interactive cells for each day/time slot */
+  /* Interactive day/time cells */
   &__cell {
-    /* Draw right + bottom; let the top be handled per-row rules to avoid double at seam */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    border-top: 1px solid var(--grid-line);
+    /* Remove top border by default; header row supplies the seam line */
+    border-top: 0;
     background: var(--bg-canvas, #fff);
     cursor: pointer;
     position: relative;
     transition: background-color .12s ease;
+    margin: 0; /* defensive reset */
 
     &:hover { background: var(--hover-bg, #F9FAFB); }
     &:focus-visible { @include m.focus-ring; }
   }
 
-  /* When first body row: suppress top border so header and first row touch seamlessly */
-  &__cell--first {
-    border-top: 0 !important;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+  /* Mark for booked cells */
+  &__mark {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
   }
 
-  /* Defensive: eliminate any row-gap/padding/margin between sticky header and first row */
-  &__cell--first,
-  &__timecell--first {
-    padding-top: 0 !important;
-  }
-
-  /* Prevent layout engines from introducing gaps between rows */
-  > * {
-    margin-top: 0 !important;
-  }
-
-  /* Optional emphasis for booked cells */
+  /* Optional subtle booked background */
   .is-booked {
     background-image: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%);
   }
-}
 
-/* Absolute booking indicator aligned to shared column anchor */
-.booking-anchor {
-  position: relative;
-
-  /* faint dashed guide to visually connect header and bookings */
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: var(--mark-offset);
-    border-left: 1px dashed rgba(37, 99, 235, 0.16);
-    pointer-events: none;
+  /* Targeted fix: Ensure absolutely NO gap between sticky header and first grid row
+     - Header provides the only bottom border at the seam.
+     - First data-row cells and timecell have no top border, margins, or padding that could introduce a gap.
+  */
+  /* Remove any possible spacing on the first data row items (timecell and 7 day cells) */
+  &__timecell:nth-of-type(1) { /* first timecell after headers */
+    border-top: 0 !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
   }
+  /* First row of day cells (immediately following the first timecell) */
+  &__cell:nth-of-type(-n+7) {
+    border-top: 0 !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* Defensive zeroing for all direct children to prevent invisible seams from margin-collapsing */
+  > * { margin-top: 0 !important; }
 }
 
-/* Booking mark (dot) sits on the same vertical as the weekday header content */
-.booking-mark {
-  position: absolute;
-  left: var(--mark-offset);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.10);
-  transform: translateX(-50%); /* center the dot on the guide */
-}
-
-/* Responsive refinements */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
   .sched__month { font-size: 18px; }
   .sched-grid { grid-auto-rows: 56px; }
