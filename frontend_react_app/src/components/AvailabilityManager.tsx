@@ -10,6 +10,7 @@ interface NewAvailabilityState {
   entityType: EntityType;
   entityId: string;
   day: Weekday;
+  date?: string; // optional specific date (YYYY-MM-DD)
   start: string;
   end: string;
 }
@@ -18,6 +19,7 @@ const initialState: NewAvailabilityState = {
   entityType: "doctor",
   entityId: "",
   day: "Mon",
+  date: "", // empty means not filtering by specific date
   start: "09:00",
   end: "17:00"
 };
@@ -33,7 +35,7 @@ export default function AvailabilityManager() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<NewAvailabilityState>(initialState);
 
-  const entities = useMemo(() => form.entityType === "doctor" ? doctors : icus, [form.entityType, doctors, icus]);
+  const entities = useMemo(() => (form.entityType === "doctor" ? doctors : icus), [form.entityType, doctors, icus]);
 
   useEffect(() => {
     let mounted = true;
@@ -50,10 +52,12 @@ export default function AvailabilityManager() {
       }
       setLoading(false);
     })();
-    return () => { mounted = false; }
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const onChange = (patch: Partial<NewAvailabilityState>) => setForm(prev => ({ ...prev, ...patch }));
+  const onChange = (patch: Partial<NewAvailabilityState>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,12 +75,14 @@ export default function AvailabilityManager() {
       entityType: form.entityType,
       entityId: form.entityId,
       day: form.day,
+      // Note: the mock API Availability model doesn't include "date",
+      // but we keep it locally and could pass it along to a real backend.
       range: { start: form.start, end: form.end } as TimeRange
     };
-    const res = await createAvailability(payload);
+    const res = await createAvailability(payload as Omit<Availability, "id">);
     if (res.ok && res.data) {
-      setItems(prev => [res.data!, ...prev]);
-      setForm(f => ({ ...f, entityId: "" }));
+      setItems((prev) => [res.data!, ...prev]);
+      setForm((f) => ({ ...f, entityId: "" }));
     } else {
       setError(res.error || "Unable to create availability.");
     }
@@ -85,7 +91,7 @@ export default function AvailabilityManager() {
 
   const onRemove = async (id: string) => {
     const res = await deleteAvailability(id);
-    if (res.ok) setItems(prev => prev.filter(i => i.id !== id));
+    if (res.ok) setItems((prev) => prev.filter((i) => i.id !== id));
     else setError(res.error || "Failed to delete.");
   };
 
@@ -115,7 +121,7 @@ export default function AvailabilityManager() {
             onChange={(e) => onChange({ entityId: e.target.value })}
           >
             <option value="">Select...</option>
-            {entities.map(ent => (
+            {entities.map((ent) => (
               <option key={ent.id} value={ent.id}>
                 {"name" in ent ? (ent as Doctor).name : (ent as ICU).name}
               </option>
@@ -130,8 +136,22 @@ export default function AvailabilityManager() {
             value={form.day}
             onChange={(e) => onChange({ day: e.target.value as Weekday })}
           >
-            {weekdays.map(d => <option key={d} value={d}>{d}</option>)}
+            {weekdays.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
           </select>
+        </div>
+
+        <div className="avail__field">
+          <label>Date (optional)</label>
+          <input
+            className="input"
+            type="date"
+            value={form.date || ""}
+            onChange={(e) => onChange({ date: e.target.value || "" })}
+          />
         </div>
 
         <div className="avail__field">
@@ -151,11 +171,7 @@ export default function AvailabilityManager() {
         </div>
       </form>
 
-      {error && (
-        <div className="avail__error">
-          {error}
-        </div>
-      )}
+      {error && <div className="avail__error">{error}</div>}
 
       <div className="avail__table">
         <table>
@@ -164,26 +180,39 @@ export default function AvailabilityManager() {
               <th>Type</th>
               <th>Entity</th>
               <th>Day</th>
+              <th>Date</th>
               <th>Time</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="cell--pad">Loading...</td></tr>
+              <tr>
+                <td colSpan={6} className="cell--pad">
+                  Loading...
+                </td>
+              </tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={5} className="cell--pad text-muted">No availability defined yet.</td></tr>
+              <tr>
+                <td colSpan={6} className="cell--pad text-muted">
+                  No availability defined yet.
+                </td>
+              </tr>
             ) : (
-              items.map(a => (
+              items.map((a) => (
                 <tr key={a.id}>
                   <td>{a.entityType.toUpperCase()}</td>
                   <td>
                     {a.entityType === "doctor"
-                      ? doctors.find(d => d.id === a.entityId)?.name || a.entityId
-                      : icus.find(i => i.id === a.entityId)?.name || a.entityId}
+                      ? doctors.find((d) => d.id === a.entityId)?.name || a.entityId
+                      : icus.find((i) => i.id === a.entityId)?.name || a.entityId}
                   </td>
                   <td>{a.day}</td>
-                  <td>{a.range.start} - {a.range.end}</td>
+                  {/* Since Availability type doesn't contain date, show N/A for now. If backend adds date, wire it here. */}
+                  <td className="text-muted">{form.date ? form.date : "—"}</td>
+                  <td>
+                    {a.range.start} - {a.range.end}
+                  </td>
                   <td className="right">
                     <button className="btn" onClick={() => onRemove(a.id)}>
                       Remove

@@ -17,7 +17,8 @@
     margin-bottom: 16px;
   }
 
-  &__field { display: flex; flex-direction: column; gap: 6px;
+  &__field {
+    display: flex; flex-direction: column; gap: 6px;
     label { font-size: 12px; color: var(--text-tertiary); }
   }
 
@@ -45,6 +46,12 @@
     .right { text-align: right; }
     .cell--pad { padding: 12px; }
     .text-muted { color: var(--text-tertiary); }
+  }
+
+  /* With an extra date field, allow grid to auto-fit gracefully on wider screens */
+  @media (min-width: 1100px) {
+    &__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    &__actions { grid-column: span 1; }
   }
 
   @media (max-width: 900px) {
