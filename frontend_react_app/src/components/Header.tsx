@@ -1,33 +1,39 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Header.scss";
-import "./HeaderLocalOverrides.scss";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
-  userId?: string; // kept for compatibility with previous version
+  userId?: string; 
   theme?: "ocean" | "dark";
   onToggleTheme?: () => void;
-  onOpenSchedule?: () => void; // App wires this to hash route "/schedule"
-  onGoHome?: () => void; // App wires this to "/"
+  onOpenSchedule?: () => void; 
+  onGoHome?: () => void; 
 }
 
-/**
- * PUBLIC_INTERFACE
- * Header: App top bar with a left hamburger that opens a dropdown menu including "Schedule".
- * Adjusted per request:
- * - Larger hamburger icon, tightly left-aligned with ICU brand
- * - Admin Paper+ label and user icon aligned to far right
- * - Header background forced to #3E85C5 with accessible contrast
- */
 export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onOpenSchedule,
   onGoHome,
+  userId
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const handleClickOutside = (e: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      setDropdownOpen(false);
+    }
+  };
 
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   // Close on click outside and Esc
   useEffect(() => {
     const onDocMouseDown = (e: MouseEvent) => {
@@ -52,16 +58,23 @@ export const Header: React.FC<HeaderProps> = ({
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
-
-  const fallbackHashNavigate = (path: "/schedule" | "/") => {
-    window.location.hash = path;
+  const handleToggleDropdown = () => {
+    setDropdownOpen(prev => !prev);
   };
-
   const navigateSchedule = () => {
     if (onOpenSchedule) {
       onOpenSchedule();
     } else {
-      fallbackHashNavigate("/schedule");
+      navigate("/schedule");
+    }
+    setMenuOpen(false);
+  };
+
+    const manageSchedule = () => {
+    if (onOpenSchedule) {
+      onOpenSchedule();
+    } else {
+      navigate("/manageSchedule");
     }
     setMenuOpen(false);
   };
@@ -70,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
     if (onGoHome) {
       onGoHome();
     } else {
-      fallbackHashNavigate("/");
+      navigate("/dashboard/admin");
     }
     setMenuOpen(false);
   };
@@ -85,92 +98,46 @@ export const Header: React.FC<HeaderProps> = ({
       }, 0);
     }
   };
+   const handleChangePassword = () => {
+    navigate('/changepassword', { state: { userId, from: 'superadmin' } });
+  };
+  const handleLogout = () => {
 
+  localStorage.clear(); 
+  window.location.href = '/login'; 
+};
   return (
     <header className="icu-header" role="banner">
       <div className="icu-header__inner">
-        {/* Left cluster: Hamburger + brand, tight to left edge */}
-        <div className="icu-header__left">
-          <div className="icu-header__menu-wrap">
-            <button
-              ref={btnRef}
-              aria-label="Open menu"
-              aria-haspopup="true"
-              aria-expanded={menuOpen}
-              className="icu-header__hamburger"
-              onClick={() => setMenuOpen((v) => !v)}
-              onKeyDown={onHamburgerKeyDown}
+        {/* Left cluster: Hamburger + brand */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative" }}>
+          <button 
+            ref={btnRef}
+            aria-label="Open menu"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            className="icu-header__hamburger"
+            onClick={() => setMenuOpen((v) => !v)}
+            onKeyDown={onHamburgerKeyDown}
+          >
+            <svg
+            to="/dashboard/admin"
+              className="icu-header__hamburger-icon"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
             >
-              <svg
-                className="icu-header__hamburger-icon"
-                width="26"
-                height="26"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-              <span className="sr-only">Open main menu</span>
-            </button>
-
-            {/* Dropdown menu under hamburger (positioned below and aligned to left) */}
-            {menuOpen && (
-              <div
-                ref={menuRef}
-                role="menu"
-                aria-label="Main menu"
-                className="icu-user__menu icu-header__dropdown"
-              >
-                <button
-                  data-menuitem="true"
-                  role="menuitem"
-                  className="icu-user__menu-item"
-                  onClick={navigateSchedule}
-                >
-                  Schedule
-                </button>
-
-                {/* su element: a custom clickable tag that navigates to Schedule */}
-                <su
-                  data-menuitem="true"
-                  role="menuitem"
-                  tabIndex={0}
-                  onClick={navigateSchedule}
-                  onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      navigateSchedule();
-                    }
-                  }}
-                  style={{
-                    display: "inline-flex",
-                    width: "100%",
-                    justifyContent: "flex-start",
-                    padding: "10px 10px",
-                    gap: 8,
-                    background: "#fff",
-                    border: "1px solid transparent",
-                    borderRadius: 10,
-                    color: "var(--color-text)",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    fontSize: 14,
-                  }}
-                  aria-label="Go to Schedule page"
-                  title="Schedule"
-                >
-                  Schedule
-                </su>
-              </div>
-            )}
-          </div>
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
 
           <button
             className="icu-brand"
@@ -183,17 +150,57 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="icu-brand__title">Scheduling</div>
           </button>
-        </div>
 
-        {/* Right cluster: Admin Paper+ and user icon aligned far right */}
-        <div className="icu-header__right">
-          <div className="icu-header__admin">Admin Paper+</div>
-          <i className="icu-header__usericon" aria-hidden="true">👤</i>
-          {onToggleTheme && (
-            <button className="icu-user__btn icu-header__themebtn" onClick={onToggleTheme} aria-label="Toggle theme">
-              <span className="icu-user__avatar" aria-hidden="true">{theme === "dark" ? "🌙" : "☀️"}</span>
-              <span className="icu-user__chevron">Theme</span>
-            </button>
+          {/* Dropdown menu under hamburger (positioned below and aligned to left) */}
+          {menuOpen && (
+            <div
+              ref={menuRef}
+              role="menu"
+              aria-label="Main menu"
+              className="icu-user__menu"
+              style={{
+                position: "absolute",
+                top: 52,
+                left: 0,
+                right: "auto",
+                minWidth: 160,
+              }}
+            >
+              <button
+                data-menuitem="true"
+                role="menuitem"
+                className="icu-user__menu-item"
+                onClick={navigateSchedule}
+              >
+                Schedule
+              </button>
+              <button
+                data-menuitem="true"
+                role="menuitem"
+                className="icu-user__menu-item"
+                onClick={manageSchedule}
+              >
+                manageSchedule
+              </button>
+
+             
+            
+            </div>
+          )}
+        </div>
+   
+        {/* Right cluster: Theme toggle (optional) */}
+        <div className="icu-user">
+         
+        </div>
+         <div className="header-right" ref={dropdownRef}>
+          <span className="admin-text">Admin Paper+</span>
+       <i className="bi bi-person user-icon" onClick={handleToggleDropdown}></i>
+          {dropdownOpen && (
+            <div className="user-dropdown">
+              <div className="dropdown-item" onClick={handleChangePassword}>Change Password</div>
+              <div className="dropdown-item" onClick={handleLogout}>Logout</div>
+            </div>
           )}
         </div>
       </div>
@@ -207,5 +214,4 @@ export const Footer: React.FC = () => (
   </footer>
 );
 
-// Maintain compatibility with existing imports expecting a default export
 export default Header;
