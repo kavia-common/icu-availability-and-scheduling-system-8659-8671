@@ -80,44 +80,47 @@ export default function ScheduleICU() {
 
   return (
     <section className="sched">
-      <div className="sched__toolbar">
-        <div className="sched__crumbs">
-          <button className="link" type="button">Manage Availability</button>
-          <span className="sep">›</span>
-          <span className="active">Schedule ICU</span>
-        </div>
-        <div className="sched__controls">
-          <button className="btn">{loading ? "Loading..." : "This Week"}</button>
-        </div>
-      </div>
-
-      <div className="sched__header">
-        <h2 className="sched__month">{monthLabel}</h2>
-      </div>
-
-      <div className="sched-grid" role="grid" aria-label="ICU weekly calendar">
-        <div className="sched-grid__timehdr" />
-        {days.map((d) => (
-          <div key={d.toDateString()} className="sched-grid__dayhdr" role="columnheader" aria-label={d.toDateString()}>
-            <div className="dw">{new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d)}</div>
-            <div className="dn">{d.getDate()}</div>
+      {/* Elevated card wrapper for the entire Schedule ICU module */}
+      <div className="sched__card surface">
+        <div className="sched__toolbar">
+          <div className="sched__crumbs">
+            <button className="link" type="button">Manage Availability</button>
+            <span className="sep">›</span>
+            <span className="active">Schedule ICU</span>
           </div>
-        ))}
+          <div className="sched__controls">
+            <button className="btn">{loading ? "Loading..." : "This Week"}</button>
+          </div>
+        </div>
 
-        {hours.map((h) => (
-          <React.Fragment key={h}>
-            <div className="sched-grid__timecell" role="rowheader">{h}</div>
-            {days.map((d) => (
-              <button
-                key={d.toDateString() + h}
-                className="sched-grid__cell"
-                role="gridcell"
-                aria-label={`${d.toDateString()} at ${h}`}
-                onClick={() => handleCellClick(d, h)}
-              />
-            ))}
-          </React.Fragment>
-        ))}
+        <div className="sched__header">
+          <h2 className="sched__month">{monthLabel}</h2>
+        </div>
+
+        <div className="sched-grid" role="grid" aria-label="ICU weekly calendar">
+          <div className="sched-grid__timehdr" />
+          {days.map((d) => (
+            <div key={d.toDateString()} className="sched-grid__dayhdr" role="columnheader" aria-label={d.toDateString()}>
+              <div className="dw">{new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d)}</div>
+              <div className="dn">{d.getDate()}</div>
+            </div>
+          ))}
+
+          {hours.map((h) => (
+            <React.Fragment key={h}>
+              <div className="sched-grid__timecell" role="rowheader">{h}</div>
+              {days.map((d) => (
+                <button
+                  key={d.toDateString() + h}
+                  className="sched-grid__cell"
+                  role="gridcell"
+                  aria-label={`${d.toDateString()} at ${h}`}
+                  onClick={() => handleCellClick(d, h)}
+                />
+              ))}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
       <BookingModal
