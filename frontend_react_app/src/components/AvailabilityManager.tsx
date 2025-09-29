@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Availability, Doctor, ICU, TimeRange, Weekday } from "../types/domain";
+import { apiBase } from "../services/apiBase";
 import "./AvailabilityManager.scss";
 
 /**
@@ -24,8 +25,6 @@ type ApiAvailability = Availability & { date?: string };
 const weekdays: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /** Minimal JSON fetch helper */
-import { apiBase } from "../services/apiBase";
-
 async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; data?: T; error?: string }> {
   try {
     const res = await fetch(url, {

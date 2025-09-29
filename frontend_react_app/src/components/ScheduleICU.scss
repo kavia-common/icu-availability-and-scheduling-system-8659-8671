@@ -1,6 +1,7 @@
 @use "../styles/variables" as *;
 @use "../styles/mixins" as m;
 
+/* Inline link used in crumbs */
 .link {
   background: transparent;
   border: none;
@@ -13,7 +14,7 @@
 .link:hover { opacity: .9; }
 
 .sched {
-  /* Keep base for context if used elsewhere, but main visual now in &__card */
+  /* Card wrapper for Schedule ICU area */
   &__card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -36,55 +37,96 @@
   &__controls { display: flex; gap: 8px; }
 
   &__header { margin: 8px 0 12px; }
-  &__month { margin: 0; font-size: 18px; }
+  &__month {
+    margin: 0;
+    font-size: 20px; /* month title ~20px per notes */
+    font-weight: 600;
+    color: var(--text-primary);
+  }
 }
 
-.sched-grid {
-  display: grid;
-  grid-template-columns: 88px repeat(7, 1fr);
-  grid-auto-rows: 48px;
-  border-top: 1px solid var(--grid-major);
-  border-left: 1px solid var(--grid-major);
-  background: #fff;
+/* Calendar layout: fixed gutter + 7 equal columns, consistent with design notes.
+   Header and body share the same column template to avoid drift. */
+$gutter: 80px;
+$row-h: 56px;
 
+.sched-grid {
+  /* Entire grid including sticky header and body cells are one grid for simplicity */
+  display: grid;
+  grid-template-columns: $gutter repeat(7, 1fr);
+  grid-auto-rows: $row-h;
+  background: #fff;
+  border: 1px solid var(--grid-major);
+  border-radius: 12px;
+  overflow: hidden;
+
+  /* Header row cells (time header spacer + 7 day headers) */
   &__timehdr {
-    position: sticky; top: 0;
+    position: sticky;
+    top: 0;
     background: #fff;
     border-right: 1px solid var(--grid-major);
     border-bottom: 1px solid var(--grid-major);
     height: 56px;
+    grid-column: 1 / 2;
   }
 
   &__dayhdr {
-    position: sticky; top: 0;
+    position: sticky;
+    top: 0;
     background: #fff;
     border-right: 1px solid var(--grid-major);
     border-bottom: 1px solid var(--grid-major);
     height: 56px;
-    display: grid; place-items: center;
-    .dw { font-size: 12px; color: var(--text-tertiary); }
-    .dn { font-size: 14px; font-weight: 600; }
+    display: grid;
+    place-items: center;
+    .dw {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      line-height: 1.2;
+    }
+    .dn {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--day-header-text, var(--text-primary));
+      line-height: 1.2;
+    }
   }
 
+  /* Time gutter cells */
   &__timecell {
     border-right: 1px solid var(--grid-major);
     border-bottom: 1px solid var(--grid-major);
-    display: flex; align-items: flex-start; justify-content: flex-end;
-    padding: 6px 8px;
-    font-size: 12px; color: var(--text-tertiary);
+    display: flex;
+    align-items: center; /* center aligns the hour to the row per notes */
+    justify-content: flex-end;
+    padding: 0 8px;
+    font-size: 12px;
+    color: var(--text-tertiary);
     background: #fff;
   }
 
+  /* Interactive day/time cells */
   &__cell {
     border-right: 1px solid var(--grid-major);
     border-bottom: 1px solid var(--grid-major);
-    background: #fff;
+    background: var(--bg-canvas, #fff);
     cursor: pointer;
     position: relative;
+    transition: background-color .12s ease;
 
     &:hover {
-      background: var(--accent-soft);
+      background: var(--hover-bg, #F9FAFB);
     }
     &:focus-visible { @include m.focus-ring; }
   }
+}
+
+/* Small responsive refinements */
+@media (max-width: 1024px) {
+  .sched__month { font-size: 18px; }
+  .sched-grid { grid-auto-rows: 52px; }
+}
+@media (max-width: 768px) {
+  .sched-grid { grid-template-columns: 64px repeat(7, 1fr); } /* narrower gutter on tablets */
 }
