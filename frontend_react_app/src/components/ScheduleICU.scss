@@ -18,7 +18,8 @@
   &__card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    /* Remove rounding to ensure all contained grid cells render with sharp corners */
+    border-radius: 0;
     box-shadow: var(--shadow-md);
     padding: 16px;
   }
@@ -57,7 +58,8 @@ $row-h: 56px;
   grid-auto-rows: $row-h;
   background: #fff;
   border: 1px solid var(--grid-major);
-  border-radius: 12px;
+  /* Remove rounding from grid wrapper to keep all cells squared */
+  border-radius: 0;
   overflow: hidden;
 
   /* Header row cells (time header spacer + 7 day headers) */
