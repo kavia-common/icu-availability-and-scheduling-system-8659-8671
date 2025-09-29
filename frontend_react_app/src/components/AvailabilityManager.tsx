@@ -24,6 +24,8 @@ type ApiAvailability = Availability & { date?: string };
 const weekdays: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /** Minimal JSON fetch helper */
+import { apiBase } from "../services/apiBase";
+
 async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; data?: T; error?: string }> {
   try {
     const res = await fetch(url, {
@@ -43,13 +45,13 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; d
 }
 
 async function fetchDoctors() {
-  return api<Doctor[]>("/api/doctors");
+  return api<Doctor[]>(apiBase("/api/doctors"));
 }
 async function fetchICUs() {
-  return api<ICU[]>("/api/icus");
+  return api<ICU[]>(apiBase("/api/icus"));
 }
 async function fetchAvailabilities() {
-  return api<ApiAvailability[]>("/api/availability");
+  return api<ApiAvailability[]>(apiBase("/api/availability"));
 }
 async function createAvailabilityApi(payload: {
   entityType: EntityType;
@@ -58,16 +60,16 @@ async function createAvailabilityApi(payload: {
   date?: string | null;
   range: TimeRange;
 }) {
-  return api<ApiAvailability>("/api/availability", { method: "POST", body: JSON.stringify(payload) });
+  return api<ApiAvailability>(apiBase("/api/availability"), { method: "POST", body: JSON.stringify(payload) });
 }
 async function updateAvailabilityApi(
   id: string,
   payload: Partial<{ entityType: EntityType; entityId: string; day: Weekday; date?: string | null; range: TimeRange }>
 ) {
-  return api<ApiAvailability>(`/api/availability/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+  return api<ApiAvailability>(apiBase(`/api/availability/${id}`), { method: "PUT", body: JSON.stringify(payload) });
 }
 async function deleteAvailabilityApi(id: string) {
-  return api<{ success: boolean }>(`/api/availability/${id}`, { method: "DELETE" });
+  return api<{ success: boolean }>(apiBase(`/api/availability/${id}`), { method: "DELETE" });
 }
 
 interface NewAvailabilityState {
