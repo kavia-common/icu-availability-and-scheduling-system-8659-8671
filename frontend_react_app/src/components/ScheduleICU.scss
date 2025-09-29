@@ -13,12 +13,15 @@
 }
 .link:hover { opacity: .9; }
 
+/* Enforce no rounded corners anywhere within schedule module */
+.sched, .sched * { border-radius: 0 !important; }
+
 .sched {
   /* Card wrapper for Schedule ICU area */
   &__card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    /* Remove rounding to ensure all contained grid cells render with sharp corners */
+    /* Absolutely no rounding on the wrapper per notes */
     border-radius: 0;
     box-shadow: var(--shadow-md);
     padding: 16px;
@@ -46,42 +49,56 @@
   }
 }
 
-/* Calendar layout: fixed gutter + 7 equal columns, consistent with design notes.
-   Header and body share the same column template to avoid drift. */
+/* Calendar layout per schedule_month_grid_design_notes:
+   - 7 equal-width day columns (repeat(7, 1fr))
+   - Shared grid structure for header and body to guarantee exact alignment
+   - No rounded corners anywhere
+   - Uniform hairline lattice using a single border variable
+*/
 $gutter: 80px;
-$row-h: 56px;
+$row-h: 60px; /* closer to design suggestion (60px baseline) */
 
+:root {
+  /* ensure grid line color variable exists as single source of truth */
+  --grid-line: var(--grid-major, #E5E7EB);
+}
+
+/* One parent grid including a sticky header row, with identical column tracks for header and body */
 .sched-grid {
-  /* Entire grid including sticky header and body cells are one grid for simplicity */
   display: grid;
-  grid-template-columns: $gutter repeat(7, 1fr);
+  grid-template-columns: $gutter repeat(7, 1fr); /* time gutter + 7 equal columns */
   grid-auto-rows: $row-h;
+  column-gap: 0;
+  row-gap: 0;
   background: #fff;
-  border: 1px solid var(--grid-major);
-  /* Remove rounding from grid wrapper to keep all cells squared */
+  /* Outer lattice: uniform border and no rounding */
+  border: 1px solid var(--grid-line);
   border-radius: 0;
   overflow: hidden;
 
-  /* Header row cells (time header spacer + 7 day headers) */
+  /* Header spacer cell for gutter */
   &__timehdr {
     position: sticky;
     top: 0;
     background: #fff;
-    border-right: 1px solid var(--grid-major);
-    border-bottom: 1px solid var(--grid-major);
-    height: 56px;
+    border-right: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
+    height: 40px; /* header height baseline */
     grid-column: 1 / 2;
   }
 
+  /* Day header cells (7 of them); share the same column tracks, no extra padding that could offset alignment */
   &__dayhdr {
     position: sticky;
     top: 0;
     background: #fff;
-    border-right: 1px solid var(--grid-major);
-    border-bottom: 1px solid var(--grid-major);
-    height: 56px;
+    border-right: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
+    height: 40px;
     display: grid;
     place-items: center;
+    text-align: center;
+
     .dw {
       font-size: 12px;
       color: var(--text-tertiary);
@@ -95,13 +112,13 @@ $row-h: 56px;
     }
   }
 
-  /* Time gutter cells */
+  /* Time gutter cells (hour labels) */
   &__timecell {
-    border-right: 1px solid var(--grid-major);
-    border-bottom: 1px solid var(--grid-major);
+    border-right: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
     display: flex;
-    align-items: center; /* center aligns the hour to the row per notes */
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: flex-end; /* right-align digits */
     padding: 0 8px;
     font-size: 12px;
     color: var(--text-tertiary);
@@ -110,24 +127,23 @@ $row-h: 56px;
 
   /* Interactive day/time cells */
   &__cell {
-    border-right: 1px solid var(--grid-major);
-    border-bottom: 1px solid var(--grid-major);
+    /* Draw lattice using single-pixel lines; avoid double thickness by using right/bottom edges */
+    border-right: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
     background: var(--bg-canvas, #fff);
     cursor: pointer;
     position: relative;
     transition: background-color .12s ease;
 
-    &:hover {
-      background: var(--hover-bg, #F9FAFB);
-    }
+    &:hover { background: var(--hover-bg, #F9FAFB); }
     &:focus-visible { @include m.focus-ring; }
   }
 }
 
-/* Small responsive refinements */
+/* Responsive refinements */
 @media (max-width: 1024px) {
   .sched__month { font-size: 18px; }
-  .sched-grid { grid-auto-rows: 52px; }
+  .sched-grid { grid-auto-rows: 56px; }
 }
 @media (max-width: 768px) {
   .sched-grid { grid-template-columns: 64px repeat(7, 1fr); } /* narrower gutter on tablets */
