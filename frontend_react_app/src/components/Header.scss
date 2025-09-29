@@ -8,70 +8,123 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--color-surface);
-  box-shadow: 0 1px 0 var(--color-border);
+  /* Force requested blue background */
+  background: #3E85C5 !important;
+  /* Subtle shadow line for separation */
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
 
   &__inner {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 12px 16px;
+    /* tighter vertical padding while keeping touch targets comfortable */
+    padding: 10px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
   }
 
+  /* Left and Right clusters for clearer alignment control */
+  &__left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 0; /* tight to the left edge of container */
+  }
+
+  &__right {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #EAF3FB; /* softened white for text on blue */
+  }
+
+  &__admin {
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: .2px;
+  }
+
+  &__usericon {
+    font-style: normal;
+    font-size: 18px;
+    line-height: 1;
+    color: #FFFFFF;
+  }
+
+  &__themebtn {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(255,255,255,0.6);
+    color: #0F172A;
+  }
+
+  &__menu-wrap {
+    position: relative;
+  }
+
   &__hamburger {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px; height: 42px;
-    border-radius: 10px;
-    background: #fff;
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
+    width: 48px; height: 48px; /* larger and more prominent */
+    border-radius: 12px;
+    background: #FFFFFF;
+    border: 1px solid rgba(255,255,255,0.6);
+    color: #0F172A;
     cursor: pointer;
-    transition: background-color .15s ease, transform .1s ease, border-color .15s ease;
-    box-shadow: var(--shadow-sm);
+    transition: background-color .15s ease, transform .1s ease, border-color .15s ease, box-shadow .15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 
-    &:hover { background: #f3f4f6; }
+    &:hover { background: #F3F4F6; }
     &:active { transform: translateY(1px); }
-    &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.6); }
   }
 
   &__hamburger-icon { display: block; }
+
+  /* Dropdown aligned with hamburger left edge */
+  &__dropdown {
+    position: absolute;
+    top: 54px;
+    left: 0;
+    right: auto;
+    min-width: 180px;
+  }
 }
 
-/* Brand (center) */
+/* Brand (next to hamburger) */
 .icu-brand {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
   user-select: none;
+  color: #FFFFFF; /* brand text on blue */
 
   &__logo {
-    width: 36px; height: 36px;
+    width: 40px; height: 40px; /* slightly larger for balance with bigger hamburger */
     border-radius: 10px;
-    background: linear-gradient(135deg, rgba(37,99,235,.18), rgba(245,158,11,.18));
+    background: linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.12));
     display: grid; place-items: center;
-    color: var(--color-primary);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-sm);
+    color: #0F172A;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
   &__logo-text {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: .6px;
+    color: #0F172A;
   }
   &__title {
     font-weight: 800;
     letter-spacing: .2px;
-    color: var(--color-text);
+    color: #FFFFFF;
   }
 }
 
-/* Right user area */
+/* Right user area and dropdown base */
 .icu-user {
   position: relative;
   display: flex;
