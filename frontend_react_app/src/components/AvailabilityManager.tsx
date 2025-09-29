@@ -3,14 +3,27 @@ import { Availability, Doctor, ICU, TimeRange, Weekday } from "../types/domain";
 import "./AvailabilityManager.scss";
 
 /**
- * Backend API helpers using fetch to communicate with server endpoints.
- * These assume a proxy or same-origin API at /api/*.
+ * PUBLIC_INTERFACE
+ * AvailabilityManager shows and manages availability windows for doctors and ICU rooms.
+ * Refactored: All data is loaded from backend via HTTP. No static/mock data remains.
+ *
+ * Backend endpoints expected:
+ * - GET  /api/doctors                -> Doctor[]
+ * - GET  /api/icus                   -> ICU[]
+ * - GET  /api/availability           -> Availability[] | ApiAvailability[]
+ * - POST /api/availability           -> created availability
+ * - PUT  /api/availability/:id       -> updated availability
+ * - DELETE /api/availability/:id     -> { success: boolean }
+ *
+ * Note: Configure a proxy or ensure same-origin API is available. No env is hardcoded here.
  */
+
 type EntityType = "doctor" | "icu";
-type ApiAvailability = Availability & { date?: string }; // allow date if backend provides it
+type ApiAvailability = Availability & { date?: string };
 
 const weekdays: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+/** Minimal JSON fetch helper */
 async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; data?: T; error?: string }> {
   try {
     const res = await fetch(url, {
@@ -47,7 +60,10 @@ async function createAvailabilityApi(payload: {
 }) {
   return api<ApiAvailability>("/api/availability", { method: "POST", body: JSON.stringify(payload) });
 }
-async function updateAvailabilityApi(id: string, payload: Partial<{ entityType: EntityType; entityId: string; day: Weekday; date?: string | null; range: TimeRange }>) {
+async function updateAvailabilityApi(
+  id: string,
+  payload: Partial<{ entityType: EntityType; entityId: string; day: Weekday; date?: string | null; range: TimeRange }>
+) {
   return api<ApiAvailability>(`/api/availability/${id}`, { method: "PUT", body: JSON.stringify(payload) });
 }
 async function deleteAvailabilityApi(id: string) {
@@ -58,7 +74,7 @@ interface NewAvailabilityState {
   entityType: EntityType;
   entityId: string;
   day: Weekday;
-  date?: string; // optional specific date (YYYY-MM-DD)
+  date?: string;
   start: string;
   end: string;
 }
@@ -74,14 +90,6 @@ const initialState: NewAvailabilityState = {
 
 // PUBLIC_INTERFACE
 export default function AvailabilityManager() {
-  /**
-   * Manage doctor/ICU availabilities with full backend CRUD.
-   * - Loads doctors, ICUs, and existing availability from /api on mount
-   * - Creates new entries via POST
-   * - Supports inline edit of time range and date via PUT
-   * - Deletes via DELETE
-   * - Shows robust loading and error states
-   */
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [icus, setICUs] = useState<ICU[]>([]);
   const [items, setItems] = useState<ApiAvailability[]>([]);
@@ -89,7 +97,7 @@ export default function AvailabilityManager() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<NewAvailabilityState>(initialState);
-  const [updatingId, setUpdatingId] = useState<string | null>(null); // for UX: show "Saving..." on edited row
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const entities = useMemo(
     () => (form.entityType === "doctor" ? doctors : icus),
@@ -104,6 +112,9 @@ export default function AvailabilityManager() {
       if (!mounted) return;
       if (!drRes.ok || !icuRes.ok || !avRes.ok) {
         setError(drRes.error || icuRes.error || avRes.error || "Failed to load data.");
+        setDoctors([]);
+        setICUs([]);
+        setItems([]);
       } else {
         setDoctors(drRes.data || []);
         setICUs(icuRes.data || []);
@@ -123,7 +134,6 @@ export default function AvailabilityManager() {
     if (!form.day) return "Please select a weekday.";
     if (!form.start || !form.end) return "Please select a start and end time.";
     if (form.start >= form.end) return "End time must be later than start time.";
-    // date optional; if present, expect YYYY-MM-DD
     return null;
   };
 
@@ -163,7 +173,6 @@ export default function AvailabilityManager() {
     }
   };
 
-  // Inline edit handlers (time and date)
   const onInlineChange = (id: string, patch: Partial<{ date?: string; range?: TimeRange }>) => {
     setItems((prev) =>
       prev.map((it) => (it.id === id ? { ...it, ...patch, range: patch.range ? { ...patch.range } : it.range } : it))
@@ -185,11 +194,8 @@ export default function AvailabilityManager() {
     });
     if (!res.ok) {
       setError(res.error || "Failed to update availability.");
-    } else {
-      // Ensure local state reflects backend response (which could normalize values)
-      if (res.data) {
-        setItems((prev) => prev.map((i) => (i.id === id ? res.data! : i)));
-      }
+    } else if (res.data) {
+      setItems((prev) => prev.map((i) => (i.id === id ? res.data! : i)));
     }
     setUpdatingId(null);
   };

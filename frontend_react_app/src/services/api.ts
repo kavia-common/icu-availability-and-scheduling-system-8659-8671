@@ -1,6 +1,13 @@
 import { ApiResponse, Availability, BookingRequest, Doctor, ICU, ID, ScheduleEntry } from "../types/domain";
 
-// Simple in-memory mock DB
+/**
+ * NOTE: This file provides mock services used by other parts of the app
+ * (e.g., ScheduleICU) until they are refactored to real backend endpoints.
+ * The AvailabilityManager component no longer uses these mocks and instead
+ * calls the backend directly via HTTP in its own module.
+ */
+
+// Simple in-memory mock DB (for non-refactored components only)
 const doctors: Doctor[] = [
   { id: "d1", name: "Dr. Alice Chen", specialty: "Cardiology" },
   { id: "d2", name: "Dr. Rafael Singh", specialty: "Neurology" },
