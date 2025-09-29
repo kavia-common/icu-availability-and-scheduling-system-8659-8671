@@ -3,38 +3,48 @@ import "./Header.scss";
 import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
-  userId?: string; 
+  userId?: string;
   theme?: "ocean" | "dark";
   onToggleTheme?: () => void;
-  onOpenSchedule?: () => void; 
-  onGoHome?: () => void; 
+  onOpenSchedule?: () => void;
+  onGoHome?: () => void;
 }
 
+/**
+ * PUBLIC_INTERFACE
+ * Header: App top bar with left-aligned hamburger + brand and right-aligned admin/user controls.
+ * - Background color is forced to #3E85C5 (per requirement).
+ * - Hamburger icon enlarged (~36–40px visual) and flush-left within content container.
+ * - Admin Paper+ text and user icon are grouped and right-aligned.
+ * - Accessibility: retains role="banner", ARIA for menus, Esc/Outside click to close.
+ */
 export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onOpenSchedule,
   onGoHome,
-  userId
+  userId,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
   const handleClickOutside = (e: MouseEvent) => {
     if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
       setDropdownOpen(false);
     }
   };
 
-
   useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  // Close on click outside and Esc
+
+  // Close hamburger menu on click outside and Esc
   useEffect(() => {
     const onDocMouseDown = (e: MouseEvent) => {
       if (!menuOpen) return;
@@ -58,33 +68,24 @@ export const Header: React.FC<HeaderProps> = ({
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
-  const handleToggleDropdown = () => {
-    setDropdownOpen(prev => !prev);
-  };
+
+  const handleToggleDropdown = () => setDropdownOpen((prev) => !prev);
+
   const navigateSchedule = () => {
-    if (onOpenSchedule) {
-      onOpenSchedule();
-    } else {
-      navigate("/schedule");
-    }
+    if (onOpenSchedule) onOpenSchedule();
+    else navigate("/schedule");
     setMenuOpen(false);
   };
 
-    const manageSchedule = () => {
-    if (onOpenSchedule) {
-      onOpenSchedule();
-    } else {
-      navigate("/manageSchedule");
-    }
+  const manageSchedule = () => {
+    if (onOpenSchedule) onOpenSchedule();
+    else navigate("/manageSchedule");
     setMenuOpen(false);
   };
 
   const navigateHome = () => {
-    if (onGoHome) {
-      onGoHome();
-    } else {
-      navigate("/dashboard/admin");
-    }
+    if (onGoHome) onGoHome();
+    else navigate("/dashboard/admin");
     setMenuOpen(false);
   };
 
@@ -93,25 +94,28 @@ export const Header: React.FC<HeaderProps> = ({
       e.preventDefault();
       setMenuOpen(true);
       setTimeout(() => {
-        const first = menuRef.current?.querySelector<HTMLElement>('button[data-menuitem="true"], su[data-menuitem="true"]');
+        const first = menuRef.current?.querySelector<HTMLElement>(
+          'button[data-menuitem="true"], su[data-menuitem="true"]'
+        );
         first?.focus();
       }, 0);
     }
   };
-   const handleChangePassword = () => {
-    navigate('/changepassword', { state: { userId, from: 'superadmin' } });
+
+  const handleChangePassword = () => {
+    navigate("/changepassword", { state: { userId, from: "superadmin" } });
   };
   const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = "/login";
+  };
 
-  localStorage.clear(); 
-  window.location.href = '/login'; 
-};
   return (
     <header className="icu-header" role="banner">
       <div className="icu-header__inner">
-        {/* Left cluster: Hamburger + brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative" }}>
-          <button 
+        {/* Left cluster: hamburger + brand (flush left) */}
+        <div className="icu-header__left" style={{ position: "relative" }}>
+          <button
             ref={btnRef}
             aria-label="Open menu"
             aria-haspopup="true"
@@ -121,10 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
             onKeyDown={onHamburgerKeyDown}
           >
             <svg
-            to="/dashboard/admin"
               className="icu-header__hamburger-icon"
-              width="22"
-              height="22"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -143,7 +144,6 @@ export const Header: React.FC<HeaderProps> = ({
             className="icu-brand"
             aria-label="Go home"
             onClick={navigateHome}
-            style={{ background: "transparent", border: "none" }}
           >
             <div className="icu-brand__logo">
               <span className="icu-brand__logo-text">ICU</span>
@@ -151,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="icu-brand__title">Scheduling</div>
           </button>
 
-          {/* Dropdown menu under hamburger (positioned below and aligned to left) */}
+          {/* Dropdown menu under hamburger, left-aligned */}
           {menuOpen && (
             <div
               ref={menuRef}
@@ -160,10 +160,10 @@ export const Header: React.FC<HeaderProps> = ({
               className="icu-user__menu"
               style={{
                 position: "absolute",
-                top: 52,
+                top: 56,
                 left: 0,
                 right: "auto",
-                minWidth: 160,
+                minWidth: 180,
               }}
             >
               <button
@@ -182,26 +182,42 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 manageSchedule
               </button>
+            </div>
+          )}
+        </div>
 
-             
-            
-            </div>
-          )}
-        </div>
-   
-        {/* Right cluster: Theme toggle (optional) */}
-        <div className="icu-user">
-         
-        </div>
-         <div className="header-right" ref={dropdownRef}>
-          <span className="admin-text">Admin Paper+</span>
-       <i className="bi bi-person user-icon" onClick={handleToggleDropdown}></i>
-          {dropdownOpen && (
-            <div className="user-dropdown">
-              <div className="dropdown-item" onClick={handleChangePassword}>Change Password</div>
-              <div className="dropdown-item" onClick={handleLogout}>Logout</div>
-            </div>
-          )}
+        {/* Right cluster: Admin Paper+ text + user icon, right-aligned */}
+        <div className="icu-header__right">
+          <div className="icu-user" ref={dropdownRef}>
+            <span className="icu-header__admin">Admin Paper+</span>
+            {/* Using a simple person glyph to avoid external icon deps */}
+            <span
+              role="button"
+              aria-label="User menu"
+              tabIndex={0}
+              className="icu-header__usericon"
+              onClick={handleToggleDropdown}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleToggleDropdown();
+                }
+              }}
+            >
+              ☺
+            </span>
+
+            {dropdownOpen && (
+              <div className="user-dropdown">
+                <div className="dropdown-item" onClick={handleChangePassword}>
+                  Change Password
+                </div>
+                <div className="dropdown-item" onClick={handleLogout}>
+                  Logout
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
