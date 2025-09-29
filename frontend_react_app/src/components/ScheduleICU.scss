@@ -138,6 +138,24 @@ $row-h: 60px; /* closer to design suggestion (60px baseline) */
     &:hover { background: var(--hover-bg, #F9FAFB); }
     &:focus-visible { @include m.focus-ring; }
   }
+
+  /* Mark for booked cells: small accent dot in top-right corner */
+  &__mark {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+  }
+
+  /* Optional modifier to slightly emphasize booked cells without heavy fill */
+  .is-booked {
+    /* subtle background to keep it visible yet not overpowering */
+    background-image: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%);
+  }
 }
 
 /* Responsive refinements */

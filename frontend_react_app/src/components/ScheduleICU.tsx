@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Doctor, ICU } from "../types/domain";
-import { listDoctors, listICUs } from "../services/api";
+import { createBooking, listDoctors, listICUs, listSchedules } from "../services/api";
 import "./ScheduleICU.scss";
 import BookingModal, { BookingPayload } from "./BookingModal/BookingModal";
 
 /**
  * PUBLIC_INTERFACE
  * ScheduleICU: Weekly calendar UI. Clicking a cell opens BookingModal with date/time prefilled.
+ * Now shows a subtle visual mark in cells that have at least one booking.
  */
 export default function ScheduleICU() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -16,18 +17,32 @@ export default function ScheduleICU() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState<{ date: string; start: string; end: string } | null>(null);
 
-  // Load options from API hooks (mocked service)
+  // Track booked cells as a Set of "YYYY-MM-DD|HH:mm" keys
+  const [bookedCells, setBookedCells] = useState<Set<string>>(new Set());
+
+  // Load options and existing schedules (mock API)
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
-      const [drRes, icuRes] = await Promise.all([listDoctors(), listICUs()]);
+      const [drRes, icuRes, schedRes] = await Promise.all([listDoctors(), listICUs(), listSchedules()]);
       if (!mounted) return;
       if (drRes.ok) setDoctors(drRes.data || []);
       if (icuRes.ok) setRooms(icuRes.data || []);
+      if (schedRes.ok && schedRes.data) {
+        const next = new Set<string>();
+        schedRes.data.forEach((s) => {
+          // Mark each hour block covered by the booking's start time
+          const k = `${s.date}|${s.time.start}`;
+          next.add(k);
+        });
+        setBookedCells(next);
+      }
       setLoading(false);
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Calendar: compute current week days (Mon-Sun) and time slots
@@ -35,9 +50,9 @@ export default function ScheduleICU() {
   const monday = useMemo(() => {
     const d = new Date(now);
     const day = d.getDay(); // 0 Sun .. 6 Sat
-    const diff = (day === 0 ? -6 : 1 - day);
+    const diff = day === 0 ? -6 : 1 - day;
     d.setDate(d.getDate() + diff);
-    d.setHours(0,0,0,0);
+    d.setHours(0, 0, 0, 0);
     return d;
   }, [now]);
 
@@ -57,7 +72,7 @@ export default function ScheduleICU() {
     return list;
   }, []);
 
-  const formatDate = (d: Date) => d.toISOString().slice(0,10);
+  const formatDate = (d: Date) => d.toISOString().slice(0, 10);
   const monthLabel = useMemo(() => {
     return new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(monday);
   }, [monday]);
@@ -72,11 +87,36 @@ export default function ScheduleICU() {
     setModalOpen(true);
   };
 
-  const onSave = (payload: BookingPayload) => {
-    // Wire to API in future; for now just close the modal to confirm interaction wiring
+  // PUBLIC_INTERFACE
+  const onSave = async (payload: BookingPayload) => {
+    // Create booking via mock API (createBooking) so we can also refresh local state.
+    // Map modal payload to API request shape.
+    const doctorId = payload.doctorId || (doctors[0]?.id ?? "");
+    const icuId = payload.orId || (rooms[0]?.id ?? "");
+    if (!doctorId || !icuId) {
+      // Minimal guard: if nothing is selected, just close modal without changing state
+      setModalOpen(false);
+      return;
+    }
+    await createBooking({
+      doctorId,
+      icuId,
+      date: payload.date,
+      time: { start: payload.start, end: payload.end },
+      notes: payload.notes,
+    });
+
+    // Immediately reflect in local booked cells for the start slot
+    setBookedCells((prev) => {
+      const next = new Set(prev);
+      next.add(`${payload.date}|${payload.start}`);
+      return next;
+    });
+
     setModalOpen(false);
-    console.log("Booking save requested", payload);
   };
+
+  const cellHasBooking = (date: string, time: string) => bookedCells.has(`${date}|${time}`);
 
   return (
     <section className="sched">
@@ -84,7 +124,9 @@ export default function ScheduleICU() {
       <div className="sched__card surface">
         <div className="sched__toolbar">
           <div className="sched__crumbs">
-            <button className="link" type="button">Manage Availability</button>
+            <button className="link" type="button">
+              Manage Availability
+            </button>
             <span className="sep">›</span>
             <span className="active">Schedule ICU</span>
           </div>
@@ -108,16 +150,34 @@ export default function ScheduleICU() {
 
           {hours.map((h) => (
             <React.Fragment key={h}>
-              <div className="sched-grid__timecell" role="rowheader">{h}</div>
-              {days.map((d) => (
-                <button
-                  key={d.toDateString() + h}
-                  className="sched-grid__cell"
-                  role="gridcell"
-                  aria-label={`${d.toDateString()} at ${h}`}
-                  onClick={() => handleCellClick(d, h)}
-                />
-              ))}
+              <div className="sched-grid__timecell" role="rowheader">
+                {h}
+              </div>
+              {days.map((d) => {
+                const date = formatDate(d);
+                const booked = cellHasBooking(date, h);
+                return (
+                  <button
+                    key={d.toDateString() + h}
+                    className={`sched-grid__cell${booked ? " is-booked" : ""}`}
+                    role="gridcell"
+                    aria-label={`${d.toDateString()} at ${h}${booked ? " (has booking)" : ""}`}
+                    aria-describedby={booked ? `mark-${date}-${h}` : undefined}
+                    onClick={() => handleCellClick(d, h)}
+                  >
+                    {booked && (
+                      <span
+                        id={`mark-${date}-${h}`}
+                        className="sched-grid__mark"
+                        aria-label="Has booking"
+                        role="img"
+                        aria-hidden={false}
+                        title="Has booking"
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </React.Fragment>
           ))}
         </div>
@@ -125,7 +185,7 @@ export default function ScheduleICU() {
 
       <BookingModal
         open={modalOpen}
-        initial={selected || { date: new Date().toISOString().slice(0,10), start: "09:00", end: "10:00" }}
+        initial={selected || { date: new Date().toISOString().slice(0, 10), start: "09:00", end: "10:00" }}
         doctors={doctors}
         rooms={rooms}
         onClose={() => setModalOpen(false)}
