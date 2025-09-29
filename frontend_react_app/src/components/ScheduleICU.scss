@@ -73,9 +73,14 @@ $row-h: 60px;
   border-left: 1px solid var(--grid-line);
   border-right: 1px solid var(--grid-line);
   border-bottom: 1px solid var(--grid-line);
+  /* Do not draw an extra top border on container; header row will close the top edge */
   border-top: 0;
   border-radius: 0;
   overflow: hidden;
+
+  /* Normalize any spacing that might create an apparent gap at the header/body seam */
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 
   /* Ensure the first implicit grid row (the sticky header row) has no extra spacing */
   > *:first-child {
@@ -90,8 +95,9 @@ $row-h: 60px;
     background: #fff;
     z-index: 3; /* ensure it stays above body cells */
     border-right: 1px solid var(--grid-line);
+    /* Single separating line between header and first body row */
     border-bottom: 1px solid var(--grid-line);
-    /* Draw a single top border on the sticky row to visually close the lattice */
+    /* Close the lattice top edge on the sticky header row only */
     border-top: 1px solid var(--grid-line);
     height: var(--header-height);
     grid-column: 1 / 2;
@@ -104,8 +110,9 @@ $row-h: 60px;
     background: #fff;
     z-index: 3; /* above body rows and booking dots */
     border-right: 1px solid var(--grid-line);
+    /* Single separating line between header and first body row */
     border-bottom: 1px solid var(--grid-line);
-    /* Keep only one top border (on header). Body first row won't draw a top border. */
+    /* Close the lattice top edge on the sticky header row only (avoid double with grid body) */
     border-top: 1px solid var(--grid-line);
     height: var(--header-height);
     display: flex;
@@ -133,8 +140,8 @@ $row-h: 60px;
   &__timecell {
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
-    /* Do not render an additional top border on the first time row; header already has it */
-    border-top: 0;
+    /* No top border on first body row to prevent double line under header */
+    border-top: 1px solid var(--grid-line);
     background: #fff;
     display: flex;
     align-items: center;
@@ -148,11 +155,12 @@ $row-h: 60px;
   &__timecell--first {
     border-top: 0 !important;
     margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
   /* Interactive cells for each day/time slot */
   &__cell {
-    /* Draw right + bottom; body top borders are handled by the lattice except on first row (suppressed) */
+    /* Draw right + bottom; let the top be handled per-row rules to avoid double at seam */
     border-right: 1px solid var(--grid-line);
     border-bottom: 1px solid var(--grid-line);
     border-top: 1px solid var(--grid-line);
@@ -165,25 +173,28 @@ $row-h: 60px;
     &:focus-visible { @include m.focus-ring; }
   }
 
-  /* When first body row: suppress top border so header and first row touch without double thickness or gap */
+  /* When first body row: suppress top border so header and first row touch seamlessly */
   &__cell--first {
     border-top: 0 !important;
     margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
-  /* Defensive: if any UA stylesheet adds border-collapse spacing, neutralize top margin/padding on first body row cells */
+  /* Defensive: eliminate any row-gap/padding/margin between sticky header and first row */
   &__cell--first,
   &__timecell--first {
-    padding-top: 0;
+    padding-top: 0 !important;
+  }
+
+  /* Prevent layout engines from introducing gaps between rows */
+  > * {
+    margin-top: 0 !important;
   }
 
   /* Optional emphasis for booked cells */
   .is-booked {
     background-image: radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 40%);
   }
-
-  /* Also ensure the very first grid row after sticky header doesn't introduce a gap via nth-child selectors */
-  > .sched-grid__timecell:nth-child(#{1 + 0}) { /* no-op, kept for clarity */ }
 }
 
 /* Absolute booking indicator aligned to shared column anchor */
